@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">PostFactory</string>
+    <string name="change_photo">Изменить фото</string>
+</resources>
