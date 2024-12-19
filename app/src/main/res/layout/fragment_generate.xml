@@ -32,10 +32,11 @@
             android:textColor="#131313" />
 
         <Spinner
-            android:id="@+id/spinnerTheme"
+            android:id="@+id/spinerTheme"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp"
+            android:textColor="#131313"/>
 
         <!-- Уточнения -->
         <TextView

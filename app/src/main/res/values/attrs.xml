@@ -1,0 +1,4 @@
+<resources>
+    <attr name="myFavoriteColor" format="color|reference" />
+    <!-- Добавьте другие пользовательские атрибуты при необходимости -->
+</resources>
