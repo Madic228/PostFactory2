@@ -17,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.example.postfactory2.Profile.History.HistoryFragment;
 import com.example.postfactory2.R;
 
 import java.io.File;
@@ -131,8 +132,17 @@ public class ProfileFragment extends Fragment {
 
     // Обработчики других кнопок
     private void openHistory() {
-        Toast.makeText(getContext(), "История генераций", Toast.LENGTH_SHORT).show();
+        // Создаем экземпляр HistoryFragment
+        HistoryFragment historyFragment = new HistoryFragment();
+
+        // Выполняем замену фрагмента
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, historyFragment) // ID контейнера для фрагментов
+                .addToBackStack(null) // Добавляем в стек для возврата назад
+                .commit();
     }
+
 
     private void openUpdate() {
         Toast.makeText(getContext(), "Время обновления модели", Toast.LENGTH_SHORT).show();

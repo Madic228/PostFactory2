@@ -5,4 +5,9 @@
 
     <color name="active_color">#386BF6</color> <!-- Цвет для активных элементов -->
     <color name="inactive_color">#9DB2CE</color> <!-- Цвет для неактивных элементов -->
+
+    <color name="selected_filter_color">#FFBB33</color>
+    <color name="pressed_filter_color">#FF8800</color>
+    <color name="default_filter_color">#E0E0E0</color>
+
 </resources>

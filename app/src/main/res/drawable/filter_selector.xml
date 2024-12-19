@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Состояние выбранного элемента -->
+    <item android:state_selected="true" android:drawable="@color/selected_filter_color" />
+    <!-- Состояние нажатого элемента -->
+    <item android:state_pressed="true" android:drawable="@color/pressed_filter_color" />
+    <!-- Обычное состояние -->
+    <item android:drawable="@color/default_filter_color" />
+</selector>
