@@ -35,8 +35,7 @@
             android:id="@+id/spinerTheme"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:textColor="#131313"/>
+            android:layout_marginBottom="16dp" />
 
         <!-- Уточнения -->
         <TextView
@@ -54,7 +53,8 @@
             android:layout_height="wrap_content"
             android:hint="Введите ключевые слова..."
             android:layout_marginBottom="16dp"
-            android:background="@drawable/rounded_edit_text_background" />
+            android:background="@drawable/rounded_edit_text_background"
+            />
 
         <!-- Выбор тональности -->
         <TextView

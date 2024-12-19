@@ -1,0 +1,19 @@
+<resources>
+    <!-- Пользовательский стиль для EditText -->
+    <style name="Widget.MyApp.EditText" parent="Widget.MaterialComponents.TextInputEditText.OutlinedBox">
+        <item name="android:textColorHint">@color/darker_gray</item>
+        <item name="android:textColor">@color/black</item>
+
+    </style>
+
+    <!-- Пользовательский стиль для CheckBox -->
+    <style name="Widget.MyApp.CheckBox" parent="Widget.MaterialComponents.CompoundButton.CheckBox">
+        <item name="android:buttonTint">@color/colorOnPrimary</item>
+        <item name="android:textColor">@color/colorOnPrimary</item>
+    </style>
+
+    <style name="Widget.MyApp.RadioButton" parent="Widget.MaterialComponents.CompoundButton.RadioButton">
+        <item name="android:buttonTint">@color/black</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+</resources>

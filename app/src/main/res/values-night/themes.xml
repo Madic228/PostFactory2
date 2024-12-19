@@ -1,7 +1,23 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.PostFactory2" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <!-- Цвет текста для EditText, Spinner, CheckBox -->
+        <item name="android:textColorPrimary">@color/black</item>
+        <item name="android:colorControlHighlight">@color/active_color</item>
+        <item name="android:colorControlActivated">@color/active_color</item>
+        <item name="android:colorControlNormal">@color/inactive_color</item>
+        <item name="android:statusBarColor">@color/forstatusbar</item>
+
+        <!-- Цвет активного и неактивного состояния RadioButton -->
+        <item name="colorControlActivated">@color/black</item>
+        <item name="colorControlNormal">@color/inactive_color</item>
+        <item name="radioButtonStyle">@style/Widget.MyApp.RadioButton</item>
+
+        <item name="editTextStyle">@style/Widget.MyApp.EditText</item>
+
     </style>
+
+
+
 </resources>
+

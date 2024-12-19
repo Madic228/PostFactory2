@@ -10,5 +10,15 @@
     <color name="pressed_filter_color">#FF8800</color>
     <color name="default_filter_color">#E0E0E0</color>
 
+    <color name="colorPrimary">#6200EE</color>
+    <color name="colorPrimaryVariant">#3700B3</color>
+    <color name="colorSecondary">#03DAC5</color>
+    <color name="colorOnPrimary">#FFFFFF</color>
+    <color name="colorOnSecondary">#000000</color>
+
+    <color name="forstatusbar">#F5F5F5</color>
+    <color name="darker_gray">#555555</color>
+
 
 </resources>
+

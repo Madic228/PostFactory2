@@ -18,5 +18,7 @@
     <CheckBox
         android:id="@+id/cbSelectNetwork"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:textColor="@color/black"
+        android:buttonTint="@color/black"/>
 </LinearLayout>
