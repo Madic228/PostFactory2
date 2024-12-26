@@ -1,7 +1,7 @@
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="#F5F5F5">
 
     <!-- Верхняя панель -->
@@ -77,9 +77,20 @@
             android:text="Тема поста"
             android:textStyle="bold"
             android:textSize="18sp"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="8dp"
+            android:textColor="#131313"/>
 
-        <!-- Текст поста -->
+        <!-- Дата публикации -->
+        <TextView
+            android:id="@+id/tvPublicationDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Дата публикации"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp"
+            android:textColor="#757575" />
+
+        <!-- Суммаризированный текст -->
         <EditText
             android:id="@+id/etGeneratedPost"
             android:layout_width="match_parent"
@@ -94,6 +105,17 @@
             android:inputType="textMultiLine"
             />
 
+        <!-- Ссылка на источник -->
+        <TextView
+            android:id="@+id/tvSourceLink"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ссылка на источник"
+            android:textSize="14sp"
+            android:layout_marginTop="8dp"
+            android:textColor="#0000EE"
+            android:textColorLink="#0000EE"
+            android:autoLink="web" />
     </LinearLayout>
 
     <!-- Кнопка редактирования -->
@@ -105,5 +127,6 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:contentDescription="Редактировать"
-        android:backgroundTint="@color/white"/>
+        android:backgroundTint="@color/colorOnPrimary"
+        app:tint="@color/black"/>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
