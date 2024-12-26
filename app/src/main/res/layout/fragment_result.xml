@@ -1,77 +1,109 @@
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
     android:background="#F5F5F5">
 
-    <LinearLayout
+    <!-- Верхняя панель -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:elevation="4dp">
 
-        <TextView
-            android:id="@+id/tvGeneratedPost"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Сгенерированный текст"
-            android:textSize="16sp"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/rounded_edit_text_background"
+        <!-- Кнопка назад -->
+        <ImageButton
+            android:id="@+id/btnBackArrow"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_arrow_back"
+            android:background="?attr/selectableItemBackground"
+            android:contentDescription="Назад"
+            android:layout_gravity="start|center_vertical"
             android:padding="8dp" />
 
+        <!-- Кнопки действий -->
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="end|center_vertical"
             android:orientation="horizontal"
-            android:layout_marginBottom="8dp"
-            android:gravity="center">
+            android:layout_gravity="end">
 
-            <Button
-                android:id="@+id/btnPublish"
-                android:layout_width="0dp"
+            <ImageButton
+                android:id="@+id/btnShare"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Опубликовать"
-                android:backgroundTint="#4CAF50"
-                android:textColor="#FFFFFF"
-                android:layout_marginEnd="4dp" />
+                android:background="?attr/selectableItemBackground"
+                android:contentDescription="Поделиться"
+                android:padding="8dp"
+                android:src="@drawable/ic_share" />
 
-            <Button
-                android:id="@+id/btnRegenerate"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Перегенерировать"
-                android:backgroundTint="#FFC107"
-                android:textColor="#FFFFFF"
-                android:layout_marginStart="4dp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center">
-
-            <Button
+            <ImageButton
                 android:id="@+id/btnCopy"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Скопировать"
-                android:backgroundTint="#03A9F4"
-                android:textColor="#FFFFFF"
-                android:layout_marginEnd="4dp" />
+                android:src="@drawable/ic_copy"
+                android:contentDescription="Скопировать"
+                android:background="?attr/selectableItemBackground"
+                android:padding="8dp" />
 
-            <Button
-                android:id="@+id/btnBack"
-                android:layout_width="0dp"
+            <ImageButton
+                android:id="@+id/btnRegenerate"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Назад"
-                android:backgroundTint="#F44336"
-                android:textColor="#FFFFFF"
-                android:layout_marginStart="4dp" />
+                android:src="@drawable/ic_refresh"
+                android:contentDescription="Перегенерировать"
+                android:background="?attr/selectableItemBackground"
+                android:padding="8dp" />
         </LinearLayout>
+    </androidx.appcompat.widget.Toolbar>
+
+    <!-- Контент -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:layout_marginTop="?attr/actionBarSize">
+
+        <!-- Тема поста -->
+        <TextView
+            android:id="@+id/tvPostTheme"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Тема поста"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Текст поста -->
+        <EditText
+            android:id="@+id/etGeneratedPost"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:hint="Сгенерированный текст"
+            android:background="@drawable/rounded_edit_text_background"
+            android:padding="12dp"
+            android:gravity="top"
+            android:focusable="false"
+            android:cursorVisible="false"
+            android:inputType="textMultiLine"
+            />
+
     </LinearLayout>
-</ScrollView>
+
+    <!-- Кнопка редактирования -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnEdit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_edit"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:contentDescription="Редактировать"
+        android:backgroundTint="@color/white"/>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

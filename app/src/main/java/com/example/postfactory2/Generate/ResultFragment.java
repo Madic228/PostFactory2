@@ -4,7 +4,8 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -13,44 +14,80 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.postfactory2.R;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class ResultFragment extends Fragment {
 
-    private TextView tvGeneratedPost;
-    private Button btnPublish, btnRegenerate, btnCopy, btnBack;
+    private TextView tvPostTheme;
+    private EditText etGeneratedPost;
+    private ImageButton btnBackArrow, btnShare, btnCopy, btnRegenerate;
+    private FloatingActionButton btnEdit;
+    private boolean isEditable = false;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_result, container, false);
 
-        tvGeneratedPost = view.findViewById(R.id.tvGeneratedPost);
-        btnPublish = view.findViewById(R.id.btnPublish);
-        btnRegenerate = view.findViewById(R.id.btnRegenerate);
+        // Инициализация элементов
+        tvPostTheme = view.findViewById(R.id.tvPostTheme);
+        etGeneratedPost = view.findViewById(R.id.etGeneratedPost);
+        btnBackArrow = view.findViewById(R.id.btnBackArrow);
+        btnShare = view.findViewById(R.id.btnShare);
         btnCopy = view.findViewById(R.id.btnCopy);
-        btnBack = view.findViewById(R.id.btnBack);
+        btnRegenerate = view.findViewById(R.id.btnRegenerate);
+        btnEdit = view.findViewById(R.id.btnEdit);
 
-
-
-        // Получение текста из аргументов
+        // Получение данных из аргументов
+        // Получение данных из аргументов
         if (getArguments() != null) {
-            String generatedPost = getArguments().getString("generated_post", "Текст не получен");
-            tvGeneratedPost.setText(generatedPost);
+            String postTheme = getArguments().getString("post_theme", "Тема не указана");
+            String combinedText = getArguments().getString("generated_post", "Текст не получен");
+
+            // Устанавливаем текст
+            tvPostTheme.setText(postTheme); // Устанавливаем тему
+            etGeneratedPost.setText(combinedText); // Устанавливаем объединённый текст
         }
 
-        // Обработка кнопок
-        btnPublish.setOnClickListener(v -> Toast.makeText(getContext(), "Публикация поста!", Toast.LENGTH_SHORT).show());
-        btnRegenerate.setOnClickListener(v -> Toast.makeText(getContext(), "Перегенерация поста!", Toast.LENGTH_SHORT).show());
-        btnCopy.setOnClickListener(v -> copyToClipboard(tvGeneratedPost.getText().toString()));
-        btnBack.setOnClickListener(v -> requireActivity().getSupportFragmentManager().popBackStack());
+
+        // Назад
+        btnBackArrow.setOnClickListener(v -> requireActivity().getSupportFragmentManager().popBackStack());
+
+        // Поделиться
+        btnShare.setOnClickListener(v -> Toast.makeText(getContext(), "Поделиться постом", Toast.LENGTH_SHORT).show());
+
+        // Скопировать
+        btnCopy.setOnClickListener(v -> {
+            android.content.ClipboardManager clipboard = (android.content.ClipboardManager) requireActivity().getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+            android.content.ClipData clip = android.content.ClipData.newPlainText("Generated Post", etGeneratedPost.getText().toString());
+            clipboard.setPrimaryClip(clip);
+            Toast.makeText(getContext(), "Текст скопирован в буфер обмена", Toast.LENGTH_SHORT).show();
+        });
+
+        // Перегенерация
+        btnRegenerate.setOnClickListener(v -> {
+            Toast.makeText(getContext(), "Перегенерация поста", Toast.LENGTH_SHORT).show();
+            requireActivity().getSupportFragmentManager().popBackStack();
+        });
+
+        // Редактирование текста
+        btnEdit.setOnClickListener(v -> toggleEditMode());
 
         return view;
     }
 
-    private void copyToClipboard(String text) {
-        android.content.ClipboardManager clipboard = (android.content.ClipboardManager) requireActivity().getSystemService(android.content.Context.CLIPBOARD_SERVICE);
-        android.content.ClipData clip = android.content.ClipData.newPlainText("Generated Post", text);
-        clipboard.setPrimaryClip(clip);
-        Toast.makeText(getContext(), "Текст скопирован в буфер обмена", Toast.LENGTH_SHORT).show();
+    private void toggleEditMode() {
+        isEditable = !isEditable;
+        etGeneratedPost.setFocusable(isEditable);
+        etGeneratedPost.setFocusableInTouchMode(isEditable);
+        etGeneratedPost.setCursorVisible(isEditable);
+
+        if (isEditable) {
+            btnEdit.setImageResource(R.drawable.ic_save); // Заменить значок на "Сохранить"
+            Toast.makeText(getContext(), "Режим редактирования включен", Toast.LENGTH_SHORT).show();
+        } else {
+            btnEdit.setImageResource(R.drawable.ic_edit); // Заменить значок на "Редактировать"
+            Toast.makeText(getContext(), "Изменения сохранены", Toast.LENGTH_SHORT).show();
+        }
     }
 }

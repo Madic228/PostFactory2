@@ -19,6 +19,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.example.postfactory2.R;
 
 import java.util.ArrayList;
@@ -67,12 +68,13 @@ public class GenerateFragment extends Fragment {
 
     private void setupSpinners() {
         List<String> themes = new ArrayList<>();
-        themes.add("Законодательные изменения");
-        themes.add("Новые строительные проекты");
-        themes.add("Банковские продукты");
+        themes.add("Новости рынка недвижимости");
+        themes.add("Изменения в законодательстве");
+        themes.add("Финансы");
+        themes.add("Строительные проекты и застройщики");
         themes.add("Общие тенденции рынка");
-        themes.add("Новости застройщиков");
-        themes.add("Рекомендации для покупателей/продавцов");
+        themes.add("Ремонт и DIY");
+        themes.add("Дизайн");
 
         ArrayAdapter<String> themeAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, themes);
         themeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -105,9 +107,6 @@ public class GenerateFragment extends Fragment {
     private static final String TAG = "GenerateFragment";
 
     private void onGenerateClicked() {
-
-
-
         try {
             String theme = spinnerTheme.getSelectedItem() != null ? spinnerTheme.getSelectedItem().toString() : "Не выбрано";
             String tone = spinnerTone.getSelectedItem() != null ? spinnerTone.getSelectedItem().toString() : "Не выбрано";
@@ -141,7 +140,7 @@ public class GenerateFragment extends Fragment {
             Log.i(TAG, "Request body: " + requestBody.toString());
 
             // Исправленный URL
-            String url = "http://192.168.0.102:8000/api/generate/"; // Замените x.x на ваш IP
+            String url = "http://192.168.151.69 :8000/api/generate/"; // Замените x.x на ваш IP
             Log.i(TAG, "Request URL: " + url);
 
             RequestQueue requestQueue = Volley.newRequestQueue(requireContext());
@@ -152,13 +151,27 @@ public class GenerateFragment extends Fragment {
 
                         try {
                             JSONObject jsonResponse = new JSONObject(response);
+                            String summarizedText = jsonResponse.getString("summarized_text");
                             String generatedPost = jsonResponse.getString("post_text");
+                            JSONObject userData = jsonResponse.getJSONObject("user_data");
 
-                            Log.i(TAG, "Generated post: " + generatedPost);
+                            // Объединяем все данные для отображения
+                            StringBuilder combinedText = new StringBuilder();
+                            combinedText.append("Тема: ").append(userData.getString("theme")).append("\n");
+                            combinedText.append("Тон: ").append(userData.getString("tone")).append("\n");
+                            combinedText.append("Детали: ").append(userData.getString("details")).append("\n");
+                            combinedText.append("Длина поста: ").append(userData.getString("length")).append("\n");
+                            combinedText.append("Социальные сети: ").append(userData.getJSONArray("social_networks").toString()).append("\n\n");
+                            combinedText.append("Суммаризированный текст:\n").append(summarizedText).append("\n\n");
+                            combinedText.append("Сгенерированный текст:\n").append(generatedPost);
+
+                            Log.i(TAG, "Combined text for display: " + combinedText.toString());
 
                             ResultFragment resultFragment = new ResultFragment();
                             Bundle args = new Bundle();
-                            args.putString("generated_post", generatedPost);
+                            args.putString("post_theme", userData.getString("theme"));  // Тема
+                            args.putString("summarized_text", summarizedText);         // Суммаризированный текст
+                            args.putString("generated_post", combinedText.toString()); // Весь текст
                             resultFragment.setArguments(args);
 
                             requireActivity().getSupportFragmentManager()
@@ -174,7 +187,8 @@ public class GenerateFragment extends Fragment {
                     error -> {
                         Log.e(TAG, "Error during request: " + error.getMessage(), error);
                         Toast.makeText(getContext(), "Ошибка запроса: " + error.getMessage(), Toast.LENGTH_LONG).show();
-                    }) {
+                    }
+            ) {
                 @Override
                 public String getBodyContentType() {
                     return "application/json; charset=utf-8";
@@ -190,6 +204,13 @@ public class GenerateFragment extends Fragment {
                     }
                 }
             };
+
+            // Добавляем политику повторных попыток с увеличенным временем ожидания
+            stringRequest.setRetryPolicy(new DefaultRetryPolicy(
+                    180000, // Время ожидания (180 секунд)
+                    DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+            ));
 
             requestQueue.add(stringRequest);
             Log.i(TAG, "Request added to queue");
