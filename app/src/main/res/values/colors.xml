@@ -3,8 +3,20 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <color name="active_color">#386BF6</color> <!-- Цвет для активных элементов -->
-    <color name="inactive_color">#9DB2CE</color> <!-- Цвет для неактивных элементов -->
+    <!-- Цвета для светлой темы -->
+    <color name="background_light">#F5F5F5</color>
+    <color name="card_background_light">#FFFFFF</color>
+    <color name="text_primary_light">#212121</color>
+    <color name="text_secondary_light">#757575</color>
+    <color name="accent_color">#6200EE</color>
+
+    <!-- Цвета кнопок -->
+    <color name="button_start">#4CAF50</color>
+    <color name="button_update">#2196F3</color>
+    <color name="button_delete">#F44336</color>
+
+    <color name="active_color">#386BF6</color>
+    <color name="inactive_color">#9DB2CE</color>
 
     <color name="selected_filter_color">#FFBB33</color>
     <color name="pressed_filter_color">#FF8800</color>
@@ -16,7 +28,7 @@
     <color name="colorOnPrimary">#FFFFFF</color>
     <color name="colorOnSecondary">#000000</color>
 
-    <color name="forstatusbar">#F5F5F5</color>
+    <color name="forstatusbar">#FFFFFF</color>
     <color name="darker_gray">#555555</color>
 
 

@@ -18,6 +18,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.postfactory2.Profile.History.HistoryFragment;
+import com.example.postfactory2.Profile.UpdateShedule.UpdateScheduleFragment;
 import com.example.postfactory2.R;
 
 import java.io.File;
@@ -145,8 +146,18 @@ public class ProfileFragment extends Fragment {
 
 
     private void openUpdate() {
-        Toast.makeText(getContext(), "Время обновления модели", Toast.LENGTH_SHORT).show();
+        // Создаем экземпляр UpdateScheduleFragment
+        UpdateScheduleFragment updateScheduleFragment = new UpdateScheduleFragment();
+
+        // Выполняем замену фрагмента
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, updateScheduleFragment) // ID контейнера для фрагментов
+                .addToBackStack(null) // Добавляем в стек для возврата назад
+                .commit();
     }
+
+
 
     private void openAbout() {
         Toast.makeText(getContext(), "О приложении", Toast.LENGTH_SHORT).show();
