@@ -2,6 +2,8 @@ plugins {
     id("com.android.application")
 }
 
+
+
 android {
     namespace = "com.example.postfactory2"
     compileSdk = 34

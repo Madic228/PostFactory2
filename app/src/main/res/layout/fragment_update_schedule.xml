@@ -163,6 +163,18 @@
                 app:cornerRadius="8dp"
                 android:backgroundTint="@color/button_delete"
                 android:textColor="@color/white"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/startSummarizeButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Запустить суммаризацию"
+                android:textSize="16sp"
+                android:padding="12dp"
+                android:layout_marginTop="8dp"
+                app:cornerRadius="8dp"
+                android:backgroundTint="@color/button_update"
+                android:textColor="@color/white"/>
         </LinearLayout>
 
     </LinearLayout>

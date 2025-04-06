@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment;
 import com.example.postfactory2.Generate.GenerateFragment;
 import com.example.postfactory2.Home.HomeFragment;
 import com.example.postfactory2.Profile.ProfileFragment;
+import com.example.postfactory2.utils.EnvConfig;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import android.os.Bundle;
@@ -26,6 +27,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Инициализируем конфигурацию
+        EnvConfig.init(getApplicationContext());
 
         // Загрузить первый фрагмент
         if (savedInstanceState == null) {
