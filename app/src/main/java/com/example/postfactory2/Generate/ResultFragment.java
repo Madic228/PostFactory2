@@ -13,6 +13,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
 import com.example.postfactory2.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -66,7 +67,10 @@ public class ResultFragment extends Fragment {
 
 
         // Назад
-        btnBackArrow.setOnClickListener(v -> requireActivity().getSupportFragmentManager().popBackStack());
+        btnBackArrow.setOnClickListener(v -> {
+            // Просто возвращаемся назад
+            requireActivity().getSupportFragmentManager().popBackStack();
+        });
 
         // Поделиться
         btnShare.setOnClickListener(v -> {
