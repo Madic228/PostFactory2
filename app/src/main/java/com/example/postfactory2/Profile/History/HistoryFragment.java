@@ -46,8 +46,8 @@ public class HistoryFragment extends Fragment {
         
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // Инициализация адаптера с пустым списком
-        adapter = new HistoryAdapter(new ArrayList<>());
+        // Инициализация адаптера с пустым списком и FragmentManager
+        adapter = new HistoryAdapter(new ArrayList<>(), getParentFragmentManager());
         recyclerView.setAdapter(adapter);
         
         Log.d(TAG, "Фрагмент истории создан, начинаем загрузку данных");

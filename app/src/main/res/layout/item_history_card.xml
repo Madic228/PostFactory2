@@ -5,14 +5,15 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
     android:layout_marginHorizontal="8dp"
-    app:cardBackgroundColor="#090909"
-    app:cardCornerRadius="8dp">
+    app:cardBackgroundColor="#FFFFFF"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:padding="16dp">
 
         <!-- Название поста -->
         <TextView
@@ -20,24 +21,27 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="План на день"
-            android:textSize="16sp"
-            android:textColor="@android:color/white"
-            android:textStyle="bold" />
+            android:textSize="18sp"
+            android:textColor="#212121"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium" />
 
         <!-- Дата и статус -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
             <TextView
                 android:id="@+id/tv_date"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="13 декабря 2024"
-                android:textColor="#6F6F6F"
-                android:textSize="12sp" />
+                android:textColor="#757575"
+                android:textSize="14sp"
+                android:fontFamily="sans-serif" />
 
             <TextView
                 android:id="@+id/tv_status"
@@ -45,8 +49,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:text="Не опубликовано"
-                android:textColor="#3A3A3A"
-                android:textSize="12sp" />
+                android:textColor="#9E9E9E"
+                android:textSize="14sp"
+                android:fontFamily="sans-serif" />
         </LinearLayout>
 
         <!-- Краткое содержание -->
@@ -55,40 +60,51 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Изменения в нормативно-правовых актах..."
-            android:textSize="14sp"
-            android:textColor="#CCCCCC"
-            android:layout_marginTop="4dp" />
+            android:textSize="15sp"
+            android:textColor="#424242"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="16dp"
+            android:lineSpacingExtra="4dp"
+            android:fontFamily="sans-serif" />
 
         <!-- Действия -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="8dp"
             android:orientation="horizontal"
             android:gravity="end">
 
             <!-- Кнопка Поделиться -->
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_share"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Поделиться"
-                android:backgroundTint="#1E88E5"
+                app:backgroundTint="#2196F3"
                 android:textColor="#FFFFFF"
                 android:layout_marginEnd="8dp"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="6dp" />
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp"
+                app:cornerRadius="8dp"
+                android:textAllCaps="false"
+                android:textSize="14sp"
+                android:fontFamily="sans-serif-medium" />
 
             <!-- Кнопка Доработка -->
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_regenerate"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Доработка"
-                android:backgroundTint="#43A047"
+                app:backgroundTint="#4CAF50"
                 android:textColor="#FFFFFF"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="6dp" />
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp"
+                app:cornerRadius="8dp"
+                android:textAllCaps="false"
+                android:textSize="14sp"
+                android:fontFamily="sans-serif-medium" />
         </LinearLayout>
 
     </LinearLayout>

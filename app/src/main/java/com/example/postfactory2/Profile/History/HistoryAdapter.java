@@ -2,6 +2,7 @@ package com.example.postfactory2.Profile.History;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,18 +12,23 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.postfactory2.Generate.ResultFragment;
 import com.example.postfactory2.R;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.List;
 
 public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryViewHolder> {
     private static final String TAG = "HistoryAdapter";
     private List<Post> posts;
+    private FragmentManager fragmentManager;
 
-    public HistoryAdapter(List<Post> posts) {
+    public HistoryAdapter(List<Post> posts, FragmentManager fragmentManager) {
         this.posts = posts;
+        this.fragmentManager = fragmentManager;
         Log.d(TAG, "Создан адаптер истории с " + posts.size() + " элементами");
     }
     
@@ -45,38 +51,44 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
         Log.d(TAG, "Отображение элемента #" + position + ": " + post.getTitle());
         
         holder.title.setText(post.getTitle());
-        
-        // Используем content вместо excerpt
         holder.excerpt.setText(post.getContent());
-        
         holder.date.setText(post.getDate());
         holder.status.setText(post.getStatus());
         
-        // Настройка кнопок в зависимости от статуса публикации
-        if ("Опубликовано".equals(post.getStatus()) && post.getSocialNetworkUrl() != null) {
-            holder.shareButton.setText("Открыть");
-            holder.shareButton.setOnClickListener(v -> {
-                try {
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setData(Uri.parse(post.getSocialNetworkUrl()));
-                    v.getContext().startActivity(intent);
-                } catch (Exception e) {
-                    Log.e(TAG, "Ошибка при открытии ссылки: " + e.getMessage());
-                    Toast.makeText(v.getContext(), "Не удалось открыть ссылку", Toast.LENGTH_SHORT).show();
-                }
-            });
-        } else {
-            holder.shareButton.setText("Поделиться");
-            holder.shareButton.setOnClickListener(v -> {
-                // Здесь будет логика для публикации поста
-                Toast.makeText(v.getContext(), "Публикация недоступна", Toast.LENGTH_SHORT).show();
-            });
-        }
+        // Настройка кнопки "Поделиться"
+        holder.shareButton.setOnClickListener(v -> {
+            String shareText = post.getContent();
+            
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("text/plain");
+            shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
+            
+            Intent chooserIntent = Intent.createChooser(shareIntent, "Поделиться постом");
+            v.getContext().startActivity(chooserIntent);
+        });
         
-        // Обработчик для кнопки доработки
+        // Настройка кнопки "Доработка"
         holder.regenerateButton.setOnClickListener(v -> {
-            // Здесь будет логика для доработки поста
-            Toast.makeText(v.getContext(), "Функция доработки будет доступна позже", Toast.LENGTH_SHORT).show();
+            // Создаем фрагмент результата
+            ResultFragment resultFragment = new ResultFragment();
+            
+            // Подготавливаем данные для передачи
+            Bundle args = new Bundle();
+            args.putString("post_theme", post.getTitle());
+            args.putString("summarized_text", post.getContent());
+            args.putString("publication_date", post.getDate());
+            resultFragment.setArguments(args);
+            
+            // Переходим на фрагмент результата
+            if (fragmentManager != null) {
+                fragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, resultFragment)
+                        .addToBackStack(null)
+                        .commit();
+            } else {
+                Log.e(TAG, "FragmentManager не инициализирован");
+                Toast.makeText(v.getContext(), "Не удалось открыть редактор", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
@@ -87,7 +99,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
 
     static class HistoryViewHolder extends RecyclerView.ViewHolder {
         TextView title, excerpt, date, status;
-        Button shareButton, regenerateButton;
+        MaterialButton shareButton, regenerateButton;
 
         public HistoryViewHolder(@NonNull View itemView) {
             super(itemView);
