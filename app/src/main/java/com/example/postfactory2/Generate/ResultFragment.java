@@ -151,6 +151,11 @@ public class ResultFragment extends Fragment {
         } else {
             btnEdit.setImageResource(R.drawable.ic_edit); // Заменить значок на "Редактировать"
             Toast.makeText(getContext(), "Изменения сохранены", Toast.LENGTH_SHORT).show();
+            
+            // Сохраняем изменения в историю
+            String editedText = etGeneratedPost.getText().toString();
+            String postTheme = tvPostTheme.getText().toString();
+            saveGenerationToHistory(postTheme, editedText);
         }
     }
     
