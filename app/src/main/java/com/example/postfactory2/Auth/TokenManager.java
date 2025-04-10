@@ -32,6 +32,7 @@ public class TokenManager {
     private static final String PREF_NAME = LoginActivity.PREF_NAME;
     private static final String KEY_TOKEN = LoginActivity.KEY_TOKEN;
     private static final String KEY_USERNAME = LoginActivity.KEY_USERNAME;
+    private static final String KEY_EMAIL = "user_email";
     private static final String KEY_PASSWORD = "user_password";
     private static final String KEY_TOKEN_EXPIRY = "token_expiry";
     private static final String KEY_IS_LOGGED_IN = LoginActivity.KEY_IS_LOGGED_IN;
@@ -124,6 +125,13 @@ public class TokenManager {
     }
     
     /**
+     * Получить email пользователя
+     */
+    public String getEmail() {
+        return preferences.getString(KEY_EMAIL, "");
+    }
+    
+    /**
      * Проверить, вошел ли пользователь в систему
      */
     public boolean isLoggedIn() {
@@ -139,6 +147,7 @@ public class TokenManager {
         SharedPreferences.Editor editor = preferences.edit();
         editor.remove(KEY_TOKEN);
         editor.remove(KEY_USERNAME);
+        editor.remove(KEY_EMAIL);
         editor.remove(KEY_PASSWORD);
         editor.remove(KEY_TOKEN_EXPIRY);
         editor.remove(KEY_LAST_REFRESH_TIME);

@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -20,6 +21,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.postfactory2.Auth.AuthActivity;
 import com.example.postfactory2.Auth.LoginActivity;
+import com.example.postfactory2.Auth.TokenManager;
 import com.example.postfactory2.Profile.History.HistoryFragment;
 import com.example.postfactory2.Profile.UpdateShedule.UpdateScheduleFragment;
 import com.example.postfactory2.R;
@@ -39,11 +41,10 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.example.postfactory2.Auth.TokenManager;
-
 public class ProfileFragment extends Fragment {
     private static final int PICK_IMAGE_REQUEST = 1;
     private ImageView profileImage;
+    private TextView profileName;
 
     @Nullable
     @Override
@@ -52,9 +53,13 @@ public class ProfileFragment extends Fragment {
 
         // Инициализация элементов
         profileImage = view.findViewById(R.id.profile_image);
+        profileName = view.findViewById(R.id.profile_name);
 
         // Загрузка сохраненного изображения
         loadProfileImage();
+
+        // Загрузка данных пользователя
+        updateUserInfo();
 
         // Обработчики кнопок
         view.findViewById(R.id.change_photo_text).setOnClickListener(v -> openImagePicker());
@@ -70,7 +75,27 @@ public class ProfileFragment extends Fragment {
 
         return view;
     }
-    
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Обновляем информацию при возвращении на экран
+        updateUserInfo();
+    }
+
+    private void updateUserInfo() {
+        TokenManager tokenManager = TokenManager.getInstance(requireContext());
+        String username = tokenManager.getUsername();
+        
+        if (!username.isEmpty()) {
+            // Устанавливаем имя пользователя
+            profileName.setText(username);
+        } else {
+            // Если данные отсутствуют, показываем сообщение об ошибке
+            Toast.makeText(requireContext(), "Ошибка загрузки данных пользователя", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     // Метод для выхода из аккаунта
     private void logout() {
         // Очищаем данные пользователя через TokenManager
