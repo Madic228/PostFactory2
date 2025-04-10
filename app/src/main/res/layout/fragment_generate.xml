@@ -53,10 +53,9 @@
             android:id="@+id/etNewsCount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Введите количество постов"
-            android:layout_marginBottom="16dp"
+            android:hint="Количество новостей"
             android:inputType="number"
-            android:background="@drawable/rounded_edit_text_background" />
+            android:layout_marginTop="16dp"/>
 
 
         <!-- Уточнения -->
@@ -73,10 +72,8 @@
             android:id="@+id/etDetails"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Введите ключевые слова..."
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/rounded_edit_text_background"
-            />
+            android:hint="Дополнительные детали"
+            android:layout_marginTop="16dp"/>
 
         <!-- Выбор тональности -->
         <TextView

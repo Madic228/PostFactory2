@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -32,8 +33,8 @@ import com.android.volley.DefaultRetryPolicy;
 
 public class GenerateFragment extends Fragment {
 
-    private Spinner spinnerTheme, spinnerTone;;
-    private EditText etNewsCount;
+    private Spinner spinnerTheme, spinnerTone;
+    private EditText etNewsCount, etDetails;
     private Button btnGenerate;
     private RecyclerView rvSocialNetworks;
 
@@ -47,6 +48,7 @@ public class GenerateFragment extends Fragment {
         // Инициализация элементов
         spinnerTheme = view.findViewById(R.id.spinerTheme);
         etNewsCount = view.findViewById(R.id.etNewsCount);
+        etDetails = view.findViewById(R.id.etDetails);
         btnGenerate = view.findViewById(R.id.btnGenerate);
         spinnerTone = view.findViewById(R.id.spinnerTone);
         rvSocialNetworks = view.findViewById(R.id.rvSocialNetworks);
@@ -162,11 +164,21 @@ public class GenerateFragment extends Fragment {
                         String decodedResponse = new String(response.getBytes("ISO-8859-1"), "UTF-8");
                         Log.i(TAG, "Decoded response: " + decodedResponse);
 
+                        // Получаем выбранные параметры
+                        String tone = spinnerTone.getSelectedItem().toString();
+                        String length = getSelectedLength();
+                        String details = etDetails.getText().toString();
+                        String[] socialNetworks = getSelectedSocialNetworks();
+
                         // Передача данных в NewsListFragment
                         Bundle args = new Bundle();
-                        args.putString("response", decodedResponse); // Передаем ответ от сервера
-                        args.putInt("theme_id", themeId);           // Передаем выбранную тему
-                        args.putInt("news_count", newsCount);       // Передаем количество новостей
+                        args.putString("response", decodedResponse);
+                        args.putString("theme_id", String.valueOf(themeId));
+                        args.putString("news_count", String.valueOf(newsCount));
+                        args.putString("tone", tone);
+                        args.putString("length", length);
+                        args.putString("details", details);
+                        args.putStringArray("social_networks", socialNetworks);
 
                         NewsListFragment newsListFragment = new NewsListFragment();
                         newsListFragment.setArguments(args);
@@ -204,12 +216,32 @@ public class GenerateFragment extends Fragment {
         // Увеличиваем время ожидания
         stringRequest.setRetryPolicy(new DefaultRetryPolicy(
                 30000, // Время ожидания (30 секунд)
-                DefaultRetryPolicy.DEFAULT_MAX_RETRIES, // Количество повторных попыток
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT // Множитель обратной связи
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
         ));
 
         // Добавляем запрос в очередь
         requestQueue.add(stringRequest);
         Log.i(TAG, "Request added to queue.");
+    }
+
+    private String getSelectedLength() {
+        RadioGroup rgPostLength = requireView().findViewById(R.id.rgPostLength);
+        int selectedId = rgPostLength.getCheckedRadioButtonId();
+        
+        if (selectedId == R.id.rbShort) {
+            return "Короткий";
+        } else if (selectedId == R.id.rbMedium) {
+            return "Средний";
+        } else if (selectedId == R.id.rbLong) {
+            return "Длинный";
+        }
+        return "Средний"; // По умолчанию
+    }
+
+    private String[] getSelectedSocialNetworks() {
+        RecyclerView rvSocialNetworks = requireView().findViewById(R.id.rvSocialNetworks);
+        SocialNetworkAdapter adapter = (SocialNetworkAdapter) rvSocialNetworks.getAdapter();
+        return adapter.getSelectedNetworks();
     }
 }

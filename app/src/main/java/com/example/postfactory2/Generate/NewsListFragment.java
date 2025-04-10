@@ -366,6 +366,15 @@ public class    NewsListFragment extends Fragment {
             resultArgs.putString("link", newsItem.getLink());
             resultArgs.putString("summarized_text", newsItem.getSummarizedText());
             
+            // Добавляем параметры генерации из аргументов
+            Bundle args = getArguments();
+            if (args != null) {
+                resultArgs.putString("tone", args.getString("tone"));
+                resultArgs.putString("length", args.getString("length"));
+                resultArgs.putString("details", args.getString("details"));
+                resultArgs.putStringArray("social_networks", args.getStringArray("social_networks"));
+            }
+            
             resultFragment.setArguments(resultArgs);
             
             requireActivity().getSupportFragmentManager()
@@ -423,6 +432,12 @@ public class    NewsListFragment extends Fragment {
                                 resultArgs.putString("source", updatedNewsItem.getSource());
                                 resultArgs.putString("link", updatedNewsItem.getLink());
                                 resultArgs.putString("summarized_text", updatedNewsItem.getSummarizedText());
+                                
+                                // Добавляем параметры генерации из аргументов
+                                resultArgs.putString("tone", args.getString("tone"));
+                                resultArgs.putString("length", args.getString("length"));
+                                resultArgs.putString("details", args.getString("details"));
+                                resultArgs.putStringArray("social_networks", args.getStringArray("social_networks"));
                                 
                                 resultFragment.setArguments(resultArgs);
                                 

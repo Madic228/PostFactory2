@@ -16,33 +16,33 @@ import java.util.List;
 
 public class SocialNetworkAdapter extends RecyclerView.Adapter<SocialNetworkAdapter.ViewHolder> {
 
-    private final List<String> socialNetworks;
-    private final List<String> selectedNetworks;
+    private List<String> socialNetworks;
+    private List<Boolean> selectedStates;
 
     public SocialNetworkAdapter(List<String> socialNetworks) {
         this.socialNetworks = socialNetworks;
-        this.selectedNetworks = new ArrayList<>();
+        this.selectedStates = new ArrayList<>();
+        for (int i = 0; i < socialNetworks.size(); i++) {
+            selectedStates.add(false);
+        }
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_social_network, parent, false);
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_social_network, parent, false);
         return new ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        String socialNetwork = socialNetworks.get(position);
-        holder.tvSocialNetwork.setText(socialNetwork);
+        String network = socialNetworks.get(position);
+        holder.networkName.setText(network);
+        holder.checkBox.setChecked(selectedStates.get(position));
 
-        // Установка чекбокса
         holder.checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                selectedNetworks.add(socialNetwork);
-            } else {
-                selectedNetworks.remove(socialNetwork);
-            }
+            selectedStates.set(position, isChecked);
         });
     }
 
@@ -51,17 +51,23 @@ public class SocialNetworkAdapter extends RecyclerView.Adapter<SocialNetworkAdap
         return socialNetworks.size();
     }
 
-    public List<String> getSelectedNetworks() {
-        return selectedNetworks;
+    public String[] getSelectedNetworks() {
+        List<String> selected = new ArrayList<>();
+        for (int i = 0; i < socialNetworks.size(); i++) {
+            if (selectedStates.get(i)) {
+                selected.add(socialNetworks.get(i));
+            }
+        }
+        return selected.toArray(new String[0]);
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvSocialNetwork;
+    static class ViewHolder extends RecyclerView.ViewHolder {
+        TextView networkName;
         CheckBox checkBox;
 
-        public ViewHolder(@NonNull View itemView) {
+        ViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvSocialNetwork = itemView.findViewById(R.id.tvSocialNetwork);
+            networkName = itemView.findViewById(R.id.tvSocialNetwork);
             checkBox = itemView.findViewById(R.id.cbSelectNetwork);
         }
     }

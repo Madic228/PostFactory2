@@ -50,8 +50,8 @@ public class EnvConfig {
         } catch (IOException e) {
             Log.e(TAG, "Error reading .env file", e);
             // Устанавливаем значение по умолчанию
-            envVariables.put("summarization_server_ip", "2.59.40.125");
-            Log.d(TAG, "Using default IP: 2.59.40.125");
+            envVariables.put("summarization_server_ip", "192.168.31.252");
+            Log.d(TAG, "Using default IP: 192.168.31.252");
         }
     }
 

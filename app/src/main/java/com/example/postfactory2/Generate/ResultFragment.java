@@ -12,6 +12,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.app.ProgressDialog;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -28,6 +29,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONArray;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,6 +38,9 @@ import com.android.volley.DefaultRetryPolicy;
 import com.example.postfactory2.Auth.TokenManager;
 
 public class ResultFragment extends Fragment {
+    private static final String TAG = "ResultFragment";
+    private static final String TEXT_PROCESSOR_URL = "http://192.168.31.252:8000/text/process";
+    private ProgressDialog progressDialog;
 
     private TextView tvPostTheme;
     private EditText etGeneratedPost;
@@ -43,7 +48,7 @@ public class ResultFragment extends Fragment {
     private FloatingActionButton btnEdit;
     private boolean isEditable = false;
     private TextView tvPublicationDate, tvSourceLink;
-
+    private String originalSummarizedText;
 
     @Nullable
     @Override
@@ -61,7 +66,6 @@ public class ResultFragment extends Fragment {
         tvPublicationDate = view.findViewById(R.id.tvPublicationDate);
         tvSourceLink = view.findViewById(R.id.tvSourceLink);
 
-
         // Получение данных из аргументов
         if (getArguments() != null) {
             String postTheme = getArguments().getString("post_theme", "Тема не указана");
@@ -69,22 +73,27 @@ public class ResultFragment extends Fragment {
             String source = getArguments().getString("source", "Источник не указан");
             String summarizedText = getArguments().getString("summarized_text", "Текст не получен");
             String link = getArguments().getString("link", "");
+            String tone = getArguments().getString("tone", "Информативный");
+            String length = getArguments().getString("length", "Средний");
+            String details = getArguments().getString("details", "");
+            String[] socialNetworks = getArguments().getStringArray("social_networks");
+
+            // Сохраняем оригинальный текст
+            originalSummarizedText = summarizedText;
 
             // Устанавливаем данные
             tvPostTheme.setText(postTheme);
             tvPublicationDate.setText("Дата публикации: " + publicationDate);
-            etGeneratedPost.setText(summarizedText);
-            tvSourceLink.setText(link); // Ссылка добавляется в TextView
-            
-            // Сохраняем генерацию в историю
-            saveGenerationToHistory(postTheme, summarizedText);
+            tvSourceLink.setText(link);
+
+            // Пытаемся обработать текст через API
+            processText(summarizedText, tone, length, details, socialNetworks);
         } else {
             tvPostTheme.setText("Тема не указана");
             tvPublicationDate.setText("Дата не указана");
             etGeneratedPost.setText("Нет данных для отображения.");
             tvSourceLink.setText("");
         }
-
 
         // Назад
         btnBackArrow.setOnClickListener(v -> {
@@ -138,6 +147,81 @@ public class ResultFragment extends Fragment {
         return view;
     }
 
+    private void processText(String text, String tone, String length, String details, String[] socialNetworks) {
+        // Показываем прогресс-бар
+        showProgressDialog();
+        
+        try {
+            // Создаем JSON объект для запроса
+            JSONObject requestBody = new JSONObject();
+            requestBody.put("text", text);
+            requestBody.put("tone", tone);
+            requestBody.put("length", length);
+            requestBody.put("details", details);
+            
+            // Проверяем, что socialNetworks не null
+            if (socialNetworks != null && socialNetworks.length > 0) {
+                requestBody.put("social_networks", new JSONArray(socialNetworks));
+            } else {
+                requestBody.put("social_networks", new JSONArray());
+            }
+
+            // Создаем запрос
+            JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.POST,
+                TEXT_PROCESSOR_URL,
+                requestBody,
+                response -> {
+                    try {
+                        hideProgressDialog();
+                        // Проверяем статус ответа
+                        if (response.getString("status").equals("success")) {
+                            JSONObject data = response.getJSONObject("data");
+                            // Получаем текст для первой соцсети
+                            String processedText = data.getString(socialNetworks[0]);
+                            etGeneratedPost.setText(processedText);
+                            
+                            // Сохраняем в историю
+                            saveGenerationToHistory(tvPostTheme.getText().toString(), processedText);
+                        } else {
+                            // Если статус не success, используем оригинальный текст
+                            etGeneratedPost.setText(originalSummarizedText);
+                            saveGenerationToHistory(tvPostTheme.getText().toString(), originalSummarizedText);
+                        }
+                    } catch (JSONException e) {
+                        hideProgressDialog();
+                        Log.e(TAG, "Ошибка при обработке ответа: " + e.getMessage());
+                        etGeneratedPost.setText(originalSummarizedText);
+                        saveGenerationToHistory(tvPostTheme.getText().toString(), originalSummarizedText);
+                    }
+                },
+                error -> {
+                    hideProgressDialog();
+                    Log.e(TAG, "Ошибка при отправке запроса: " + error.getMessage());
+                    // При ошибке используем оригинальный текст
+                    etGeneratedPost.setText(originalSummarizedText);
+                    saveGenerationToHistory(tvPostTheme.getText().toString(), originalSummarizedText);
+                }
+            );
+
+            // Увеличиваем таймаут и количество попыток
+            request.setRetryPolicy(new DefaultRetryPolicy(
+                60000, // 60 секунд таймаут
+                3,     // 3 попытки
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+            ));
+
+            // Добавляем запрос в очередь
+            RequestQueue queue = Volley.newRequestQueue(requireContext());
+            queue.add(request);
+
+        } catch (JSONException e) {
+            hideProgressDialog();
+            Log.e(TAG, "Ошибка при создании запроса: " + e.getMessage());
+            etGeneratedPost.setText(originalSummarizedText);
+            saveGenerationToHistory(tvPostTheme.getText().toString(), originalSummarizedText);
+        }
+    }
 
     private void toggleEditMode() {
         isEditable = !isEditable;
@@ -161,66 +245,52 @@ public class ResultFragment extends Fragment {
     
     // Метод для сохранения генерации в историю
     private void saveGenerationToHistory(String title, String content) {
-        // Получаем токен через TokenManager
-        TokenManager tokenManager = TokenManager.getInstance(requireContext());
-        
-        // Проверяем, вошел ли пользователь
-        if (!tokenManager.isLoggedIn()) {
-            Log.e("ResultFragment", "Пользователь не авторизован, нельзя сохранить в историю");
+        if (!isAdded() || getContext() == null) {
+            Log.e(TAG, "Fragment not attached to context");
             return;
         }
-        
-        // Проверяем, не истек ли токен
-        if (tokenManager.isTokenExpired()) {
-            Log.e("ResultFragment", "Токен истек, пытаемся обновить");
-            
-            // Пытаемся обновить токен
-            tokenManager.refreshToken(new TokenManager.TokenRefreshCallback() {
-                @Override
-                public void onTokenRefreshed() {
-                    Log.d("ResultFragment", "Токен успешно обновлен, повторяем сохранение");
-                    // Повторное сохранение после обновления токена
-                    saveGenerationToHistoryWithToken(title, content, tokenManager.getToken());
-                }
 
-                @Override
-                public void onTokenRefreshFailed(String errorMessage) {
-                    Log.e("ResultFragment", "Не удалось обновить токен: " + errorMessage);
-                    Toast.makeText(requireContext(), "Не удалось сохранить в историю: срок сессии истек", Toast.LENGTH_SHORT).show();
-                }
-            });
+        TokenManager tokenManager = TokenManager.getInstance(getContext());
+        String token = tokenManager.getToken();
+        
+        if (token == null || token.isEmpty()) {
+            Log.e(TAG, "Token is null or empty");
             return;
         }
-        
-        // Токен действителен, выполняем сохранение
-        saveGenerationToHistoryWithToken(title, content, tokenManager.getToken());
+
+        saveGenerationToHistoryWithToken(title, content, token);
     }
     
     // Вспомогательный метод для сохранения генерации с токеном
     private void saveGenerationToHistoryWithToken(String title, String content, String token) {
+        if (!isAdded() || getContext() == null) {
+            Log.e(TAG, "Fragment not attached to context");
+            return;
+        }
+
         // Проверка данных перед отправкой
         if (title == null || title.isEmpty() || content == null || content.isEmpty()) {
-            Log.e("ResultFragment", "Заголовок или содержание пусты, нельзя сохранить в историю");
+            Log.e(TAG, "Заголовок или содержание пусты, нельзя сохранить в историю");
             return;
         }
         
         // Проверка токена
         if (token == null || token.isEmpty()) {
-            Log.e("ResultFragment", "Токен пустой, нельзя сохранить в историю");
+            Log.e(TAG, "Токен пустой, нельзя сохранить в историю");
             return;
         }
         
-        Log.d("ResultFragment", "Пытаемся сохранить генерацию в историю: " + title);
+        Log.d(TAG, "Пытаемся сохранить генерацию в историю: " + title);
         
         try {
-            RequestQueue queue = Volley.newRequestQueue(requireContext());
+            RequestQueue queue = Volley.newRequestQueue(getContext());
             String url = "http://2.59.40.125:8000/api/generations";
             
             JSONObject jsonBody = new JSONObject();
             jsonBody.put("title", title);
             jsonBody.put("content", content);
             
-            Log.d("ResultFragment", "Отправляем данные на сервер: " + jsonBody.toString());
+            Log.d(TAG, "Отправляем данные на сервер: " + jsonBody.toString());
             
             JsonObjectRequest request = new JsonObjectRequest(
                     Request.Method.POST,
@@ -228,17 +298,17 @@ public class ResultFragment extends Fragment {
                     jsonBody,
                     response -> {
                         // Успешно сохранено
-                        Log.d("ResultFragment", "Успешно сохранено в историю: " + response.toString());
+                        Log.d(TAG, "Успешно сохранено в историю: " + response.toString());
                         Toast.makeText(requireContext(), "Генерация сохранена в историю", Toast.LENGTH_SHORT).show();
                     },
                     error -> {
                         // Ошибка сохранения
-                        Log.e("ResultFragment", "Ошибка при сохранении в историю: " + error.toString());
+                        Log.e(TAG, "Ошибка при сохранении в историю: " + error.toString());
                         
                         if (error.networkResponse != null) {
                             int statusCode = error.networkResponse.statusCode;
-                            Log.e("ResultFragment", "Код ответа: " + statusCode);
-                            Log.e("ResultFragment", "Данные ответа: " + new String(error.networkResponse.data));
+                            Log.e(TAG, "Код ответа: " + statusCode);
+                            Log.e(TAG, "Данные ответа: " + new String(error.networkResponse.data));
                             
                             // Проверяем, не истек ли токен (401 Unauthorized)
                             if (statusCode == 401) {
@@ -267,11 +337,32 @@ public class ResultFragment extends Fragment {
             
             queue.add(request);
         } catch (JSONException e) {
-            Log.e("ResultFragment", "Ошибка JSON при сохранении в историю: " + e.getMessage());
+            Log.e(TAG, "Ошибка JSON при сохранении в историю: " + e.getMessage());
             e.printStackTrace();
         } catch (Exception e) {
-            Log.e("ResultFragment", "Непредвиденная ошибка при сохранении в историю: " + e.getMessage());
+            Log.e(TAG, "Непредвиденная ошибка при сохранении в историю: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private void showProgressDialog() {
+        if (progressDialog == null) {
+            progressDialog = new ProgressDialog(requireContext());
+            progressDialog.setMessage("Генерация текста...");
+            progressDialog.setCancelable(false);
+        }
+        progressDialog.show();
+    }
+
+    private void hideProgressDialog() {
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.dismiss();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        hideProgressDialog();
     }
 }
