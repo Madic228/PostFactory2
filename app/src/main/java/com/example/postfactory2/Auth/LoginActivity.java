@@ -1,7 +1,9 @@
 package com.example.postfactory2.Auth;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -11,23 +13,80 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.postfactory2.MainActivity;
 import com.example.postfactory2.R;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class LoginActivity extends AppCompatActivity {
-
+    private static final String TAG = "LoginActivity";
     private static final String LOGIN_URL = "http://2.59.40.125:8000/api/auth/login";
+    private static final int TIMEOUT_MS = 10000; // 10 секунд таймаут
+    private static final int MAX_RETRIES = 2; // Максимум 2 попытки
+
+    public static final String PREF_NAME = "UserSessionPref";
+    public static final String KEY_TOKEN = "token";
+    public static final String KEY_USERNAME = "username";
+    public static final String KEY_IS_LOGGED_IN = "isLoggedIn";
+    
+    private TokenManager tokenManager;
+    private boolean isTokenRefreshing = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // Инициализация менеджера токенов
+        tokenManager = TokenManager.getInstance(this);
+        
+        // Проверка, авторизован ли пользователь, но только если не обновляем токен
+        if (tokenManager.isLoggedIn() && !isTokenRefreshing) {
+            // Проверяем, не истек ли токен
+            if (tokenManager.isTokenExpired()) {
+                Log.d(TAG, "Токен истек, пытаемся обновить");
+                // Пытаемся обновить токен
+                isTokenRefreshing = true;
+                tokenManager.refreshToken(new TokenManager.TokenRefreshCallback() {
+                    @Override
+                    public void onTokenRefreshed() {
+                        Log.d(TAG, "Токен успешно обновлен, переходим на главный экран");
+                        isTokenRefreshing = false;
+                        startMainActivity();
+                    }
+
+                    @Override
+                    public void onTokenRefreshFailed(String errorMessage) {
+                        Log.e(TAG, "Не удалось обновить токен: " + errorMessage);
+                        // Показываем экран входа, так как токен не обновился
+                        isTokenRefreshing = false;
+                        showLoginScreen();
+                    }
+                });
+                return;
+            } else {
+                // Если пользователь уже авторизован и токен действителен,
+                // перейти на главный экран
+                Log.d(TAG, "Пользователь уже авторизован, переходим на главный экран");
+                startMainActivity();
+                return;
+            }
+        } else {
+            // Показываем экран входа
+            showLoginScreen();
+        }
+    }
+    
+    private void showLoginScreen() {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        
         setContentView(R.layout.activity_login);
 
         EditText etUsername = findViewById(R.id.et_email);
@@ -47,25 +106,52 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void login(String username, String password) {
+        Log.d(TAG, "Попытка входа пользователя: " + username);
+        
         RequestQueue queue = Volley.newRequestQueue(this);
 
         StringRequest request = new StringRequest(
                 Request.Method.POST,
                 LOGIN_URL,
                 response -> {
-                    // Успешный ответ
-                    Toast.makeText(LoginActivity.this, "Успешный вход", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                    intent.putExtra("token", response); // Передаём токен в MainActivity
-                    startActivity(intent);
-                    finish();
+                    try {
+                        Log.d(TAG, "Получен ответ от сервера: " + response);
+                        
+                        // Получаем токен из ответа
+                        JSONObject jsonResponse = new JSONObject(response);
+                        String token = jsonResponse.getString("access_token");
+                        
+                        // Сохраняем данные с помощью TokenManager
+                        tokenManager.saveToken(token, username);
+                        tokenManager.savePassword(password);
+                        
+                        Log.d(TAG, "Данные успешно сохранены");
+                        
+                        // Сообщение об успешном входе
+                        Toast.makeText(LoginActivity.this, "Успешный вход", Toast.LENGTH_SHORT).show();
+                        
+                        // Переход на главный экран
+                        startMainActivity();
+                    } catch (JSONException e) {
+                        Log.e(TAG, "Ошибка при обработке ответа: " + e.getMessage());
+                        Toast.makeText(LoginActivity.this, "Ошибка при обработке ответа", Toast.LENGTH_SHORT).show();
+                    }
                 },
                 error -> {
                     // Обработка ошибки
-                    if (error.networkResponse != null && error.networkResponse.statusCode == 401) {
-                        Toast.makeText(LoginActivity.this, "Неверный логин или пароль", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Ошибка при входе: " + error.toString());
+                    
+                    if (error.networkResponse != null) {
+                        Log.e(TAG, "Код ответа: " + error.networkResponse.statusCode);
+                        if (error.networkResponse.statusCode == 401) {
+                            Toast.makeText(LoginActivity.this, "Неверный логин или пароль", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(LoginActivity.this, "Ошибка сервера: " + error.networkResponse.statusCode, Toast.LENGTH_SHORT).show();
+                        }
+                    } else if (error instanceof com.android.volley.TimeoutError) {
+                        Toast.makeText(LoginActivity.this, "Сервер не отвечает. Проверьте подключение к интернету", Toast.LENGTH_SHORT).show();
                     } else {
-                        Toast.makeText(LoginActivity.this, "Ошибка сервера", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(LoginActivity.this, "Ошибка сети: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 }) {
             @Override
@@ -86,6 +172,23 @@ public class LoginActivity extends AppCompatActivity {
             }
         };
 
+        // Устанавливаем таймаут и количество попыток
+        request.setRetryPolicy(new com.android.volley.DefaultRetryPolicy(
+                TIMEOUT_MS,
+                MAX_RETRIES,
+                com.android.volley.DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+        ));
+
         queue.add(request);
+    }
+    
+    private void startMainActivity() {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        
+        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+        startActivity(intent);
+        finish();
     }
 }

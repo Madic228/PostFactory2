@@ -1,60 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="8dp"
     android:background="#121212">
 
-    <!-- Фильтры -->
-    <HorizontalScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingVertical="8dp">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <!-- Пример кнопок-фильтров -->
-            <Button
-                android:id="@+id/filter_all"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/filter_selector"
-                android:text="Все"
-                android:padding="8dp"
-                android:textColor="@color/white" />
-
-            <Button
-                android:id="@+id/filter_vk"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/filter_selector"
-                android:text="Vkontakte"
-                android:padding="8dp"
-                android:layout_marginStart="8dp"
-                android:textColor="@color/white" />
-
-            <Button
-                android:id="@+id/filter_instagram"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/filter_selector"
-                android:text="Instagram"
-                android:padding="8dp"
-                android:layout_marginStart="8dp"
-                android:textColor="@color/white" />
-        </LinearLayout>
-    </HorizontalScrollView>
-
-    <!-- RecyclerView для карточек -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_history"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingTop="8dp"
-        android:clipToPadding="false" />
-</LinearLayout>
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <!-- Фильтры -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingVertical="8dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <!-- Пример кнопок-фильтров -->
+                <Button
+                    android:id="@+id/filter_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/filter_selector"
+                    android:text="Все"
+                    android:padding="8dp"
+                    android:textColor="@color/white" />
+
+                <Button
+                    android:id="@+id/filter_vk"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/filter_selector"
+                    android:text="Vkontakte"
+                    android:padding="8dp"
+                    android:layout_marginStart="8dp"
+                    android:textColor="@color/white" />
+
+                <Button
+                    android:id="@+id/filter_instagram"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/filter_selector"
+                    android:text="Instagram"
+                    android:padding="8dp"
+                    android:layout_marginStart="8dp"
+                    android:textColor="@color/white" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- RecyclerView для карточек -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_history"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingTop="8dp"
+            android:clipToPadding="false" />
+    </LinearLayout>
+    
+    <!-- ProgressBar для загрузки -->
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+        
+</FrameLayout>

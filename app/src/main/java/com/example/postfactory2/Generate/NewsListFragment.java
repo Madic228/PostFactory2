@@ -194,7 +194,7 @@ public class    NewsListFragment extends Fragment {
         // Запускаем суммаризацию только если есть статьи для обновления И мы не возвращаемся из ResultFragment
         if (!articlesToUpdate.isEmpty() && !isReturningFromResult) {
             showProgressDialog();
-            Toast.makeText(requireContext(), "Начинаем суммаризацию статей...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Проверка доступности сервера суммаризации...", Toast.LENGTH_SHORT).show();
             updateSummarizedTexts(articlesToUpdate, positions);
         }
     }
@@ -233,6 +233,14 @@ public class    NewsListFragment extends Fragment {
                 error -> {
                     Log.e(TAG, "Error making API request: " + error.getMessage(), error);
                     hideProgressDialog();
+                    
+                    // Показываем ошибку о недоступности сервера суммаризации
+                    Toast.makeText(requireContext(), 
+                        "Сервер для суммаризации недоступен. Вы можете продолжить работу с приложением.", 
+                        Toast.LENGTH_LONG).show();
+                    
+                    // Обновляем данные из основного сервера, чтобы приложение продолжало работать
+                    loadUpdatedNews();
                 }
         ) {
             @Override
@@ -256,9 +264,10 @@ public class    NewsListFragment extends Fragment {
             }
         };
 
+        // Уменьшаем таймаут для быстрой проверки доступности сервера
         request.setRetryPolicy(new com.android.volley.DefaultRetryPolicy(
-                30000,
-                com.android.volley.DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                5000, // 5 секунд вместо 30
+                1,    // Только 1 повторная попытка
                 com.android.volley.DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
         ));
 

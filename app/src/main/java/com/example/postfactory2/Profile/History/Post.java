@@ -1,24 +1,38 @@
 package com.example.postfactory2.Profile.History;
 
 public class Post {
-    private final String title;
-    private final String excerpt;
-    private final String date;
-    private final String status;
+    private int id;
+    private String title;
+    private String content;
+    private String date;
+    private String status;
+    private String socialNetworkUrl;
 
-    public Post(String title, String excerpt, String date, String status) {
+    public Post(String title, String content, String date, String status) {
         this.title = title;
-        this.excerpt = excerpt;
+        this.content = content;
         this.date = date;
         this.status = status;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getTitle() {
         return title;
     }
 
+    public String getContent() {
+        return content;
+    }
+
     public String getExcerpt() {
-        return excerpt;
+        return content;
     }
 
     public String getDate() {
@@ -27,5 +41,13 @@ public class Post {
 
     public String getStatus() {
         return status;
+    }
+    
+    public String getSocialNetworkUrl() {
+        return socialNetworkUrl;
+    }
+    
+    public void setSocialNetworkUrl(String socialNetworkUrl) {
+        this.socialNetworkUrl = socialNetworkUrl;
     }
 }

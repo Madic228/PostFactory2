@@ -1,7 +1,10 @@
 package com.example.postfactory2.Generate;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,8 +18,22 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+import com.example.postfactory2.Auth.LoginActivity;
 import com.example.postfactory2.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import com.android.volley.DefaultRetryPolicy;
+import com.example.postfactory2.Auth.TokenManager;
 
 public class ResultFragment extends Fragment {
 
@@ -58,6 +75,9 @@ public class ResultFragment extends Fragment {
             tvPublicationDate.setText("Дата публикации: " + publicationDate);
             etGeneratedPost.setText(summarizedText);
             tvSourceLink.setText(link); // Ссылка добавляется в TextView
+            
+            // Сохраняем генерацию в историю
+            saveGenerationToHistory(postTheme, summarizedText);
         } else {
             tvPostTheme.setText("Тема не указана");
             tvPublicationDate.setText("Дата не указана");
@@ -131,6 +151,122 @@ public class ResultFragment extends Fragment {
         } else {
             btnEdit.setImageResource(R.drawable.ic_edit); // Заменить значок на "Редактировать"
             Toast.makeText(getContext(), "Изменения сохранены", Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    // Метод для сохранения генерации в историю
+    private void saveGenerationToHistory(String title, String content) {
+        // Получаем токен через TokenManager
+        TokenManager tokenManager = TokenManager.getInstance(requireContext());
+        
+        // Проверяем, вошел ли пользователь
+        if (!tokenManager.isLoggedIn()) {
+            Log.e("ResultFragment", "Пользователь не авторизован, нельзя сохранить в историю");
+            return;
+        }
+        
+        // Проверяем, не истек ли токен
+        if (tokenManager.isTokenExpired()) {
+            Log.e("ResultFragment", "Токен истек, пытаемся обновить");
+            
+            // Пытаемся обновить токен
+            tokenManager.refreshToken(new TokenManager.TokenRefreshCallback() {
+                @Override
+                public void onTokenRefreshed() {
+                    Log.d("ResultFragment", "Токен успешно обновлен, повторяем сохранение");
+                    // Повторное сохранение после обновления токена
+                    saveGenerationToHistoryWithToken(title, content, tokenManager.getToken());
+                }
+
+                @Override
+                public void onTokenRefreshFailed(String errorMessage) {
+                    Log.e("ResultFragment", "Не удалось обновить токен: " + errorMessage);
+                    Toast.makeText(requireContext(), "Не удалось сохранить в историю: срок сессии истек", Toast.LENGTH_SHORT).show();
+                }
+            });
+            return;
+        }
+        
+        // Токен действителен, выполняем сохранение
+        saveGenerationToHistoryWithToken(title, content, tokenManager.getToken());
+    }
+    
+    // Вспомогательный метод для сохранения генерации с токеном
+    private void saveGenerationToHistoryWithToken(String title, String content, String token) {
+        // Проверка данных перед отправкой
+        if (title == null || title.isEmpty() || content == null || content.isEmpty()) {
+            Log.e("ResultFragment", "Заголовок или содержание пусты, нельзя сохранить в историю");
+            return;
+        }
+        
+        // Проверка токена
+        if (token == null || token.isEmpty()) {
+            Log.e("ResultFragment", "Токен пустой, нельзя сохранить в историю");
+            return;
+        }
+        
+        Log.d("ResultFragment", "Пытаемся сохранить генерацию в историю: " + title);
+        
+        try {
+            RequestQueue queue = Volley.newRequestQueue(requireContext());
+            String url = "http://2.59.40.125:8000/api/generations";
+            
+            JSONObject jsonBody = new JSONObject();
+            jsonBody.put("title", title);
+            jsonBody.put("content", content);
+            
+            Log.d("ResultFragment", "Отправляем данные на сервер: " + jsonBody.toString());
+            
+            JsonObjectRequest request = new JsonObjectRequest(
+                    Request.Method.POST,
+                    url,
+                    jsonBody,
+                    response -> {
+                        // Успешно сохранено
+                        Log.d("ResultFragment", "Успешно сохранено в историю: " + response.toString());
+                        Toast.makeText(requireContext(), "Генерация сохранена в историю", Toast.LENGTH_SHORT).show();
+                    },
+                    error -> {
+                        // Ошибка сохранения
+                        Log.e("ResultFragment", "Ошибка при сохранении в историю: " + error.toString());
+                        
+                        if (error.networkResponse != null) {
+                            int statusCode = error.networkResponse.statusCode;
+                            Log.e("ResultFragment", "Код ответа: " + statusCode);
+                            Log.e("ResultFragment", "Данные ответа: " + new String(error.networkResponse.data));
+                            
+                            // Проверяем, не истек ли токен (401 Unauthorized)
+                            if (statusCode == 401) {
+                                // Обновление токена и повторная попытка уже обрабатываются в основном методе
+                                Toast.makeText(requireContext(), "Не удалось сохранить в историю: авторизация устарела", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+                        }
+                        
+                        Toast.makeText(requireContext(), "Не удалось сохранить в историю", Toast.LENGTH_SHORT).show();
+                    }) {
+                @Override
+                public Map<String, String> getHeaders() {
+                    Map<String, String> headers = new HashMap<>();
+                    headers.put("Authorization", "Bearer " + token);
+                    headers.put("Content-Type", "application/json");
+                    return headers;
+                }
+            };
+            
+            // Устанавливаем политику повторов для запроса
+            request.setRetryPolicy(new DefaultRetryPolicy(
+                    30000, // 30 секунд тайм-аут
+                    1, // Максимальное количество повторных попыток
+                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+            
+            queue.add(request);
+        } catch (JSONException e) {
+            Log.e("ResultFragment", "Ошибка JSON при сохранении в историю: " + e.getMessage());
+            e.printStackTrace();
+        } catch (Exception e) {
+            Log.e("ResultFragment", "Непредвиденная ошибка при сохранении в историю: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

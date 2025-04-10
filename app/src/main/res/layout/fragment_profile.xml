@@ -138,6 +138,23 @@
                     android:padding="16dp"
                     android:text="О приложении"
                     android:textColor="#000000" />
+                
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E0E0E0" />
+
+                <Button
+                    android:id="@+id/logout_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?android:selectableItemBackground"
+                    android:drawableLeft="@drawable/ic_logout"
+                    android:drawablePadding="8dp"
+                    android:gravity="start|center_vertical"
+                    android:padding="16dp"
+                    android:text="Выйти из аккаунта"
+                    android:textColor="#F44336" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
     </LinearLayout>

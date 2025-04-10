@@ -10,6 +10,7 @@ import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -17,6 +18,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.example.postfactory2.Auth.AuthActivity;
+import com.example.postfactory2.Auth.LoginActivity;
 import com.example.postfactory2.Profile.History.HistoryFragment;
 import com.example.postfactory2.Profile.UpdateShedule.UpdateScheduleFragment;
 import com.example.postfactory2.R;
@@ -24,6 +27,19 @@ import com.example.postfactory2.R;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import com.example.postfactory2.Auth.TokenManager;
 
 public class ProfileFragment extends Fragment {
     private static final int PICK_IMAGE_REQUEST = 1;
@@ -45,8 +61,29 @@ public class ProfileFragment extends Fragment {
         view.findViewById(R.id.history_button).setOnClickListener(v -> openHistory());
         view.findViewById(R.id.update_button).setOnClickListener(v -> openUpdate());
         view.findViewById(R.id.about_button).setOnClickListener(v -> openAbout());
+        
+        // Добавляем кнопку выхода из аккаунта
+        Button logoutButton = view.findViewById(R.id.logout_button);
+        if (logoutButton != null) {
+            logoutButton.setOnClickListener(v -> logout());
+        }
 
         return view;
+    }
+    
+    // Метод для выхода из аккаунта
+    private void logout() {
+        // Очищаем данные пользователя через TokenManager
+        TokenManager tokenManager = TokenManager.getInstance(requireContext());
+        tokenManager.logout();
+        
+        // Показываем сообщение
+        Toast.makeText(requireContext(), "Выход выполнен", Toast.LENGTH_SHORT).show();
+        
+        // Переходим на экран авторизации
+        Intent intent = new Intent(requireActivity(), AuthActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
     }
 
     // Открытие выбора изображения
@@ -99,8 +136,6 @@ public class ProfileFragment extends Fragment {
 
         return output;
     }
-
-
 
     // Сохранение изображения в локальное хранилище
     private void saveProfileImage(Bitmap bitmap) {
@@ -161,5 +196,50 @@ public class ProfileFragment extends Fragment {
 
     private void openAbout() {
         Toast.makeText(getContext(), "О приложении", Toast.LENGTH_SHORT).show();
+    }
+
+    // После успешной генерации новости в ResultFragment
+    private void saveGenerationToHistory(String title, String content) {
+        // Получаем токен пользователя
+        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences(
+                LoginActivity.PREF_NAME, Context.MODE_PRIVATE);
+        String token = sharedPreferences.getString(LoginActivity.KEY_TOKEN, "");
+        
+        // Если нет токена, выходим
+        if (token.isEmpty()) {
+            return;
+        }
+        
+        try {
+            RequestQueue queue = Volley.newRequestQueue(requireContext());
+            String url = "http://2.59.40.125:8000/api/generations";
+            
+            JSONObject jsonBody = new JSONObject();
+            jsonBody.put("title", title);
+            jsonBody.put("content", content);
+            
+            JsonObjectRequest request = new JsonObjectRequest(
+                    Request.Method.POST,
+                    url,
+                    jsonBody,
+                    response -> {
+                        // Успешно сохранено
+                    },
+                    error -> {
+                        // Ошибка сохранения
+                    }) {
+                @Override
+                public Map<String, String> getHeaders() {
+                    Map<String, String> headers = new HashMap<>();
+                    headers.put("Authorization", "Bearer " + token);
+                    headers.put("Content-Type", "application/json");
+                    return headers;
+                }
+            };
+            
+            queue.add(request);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }
