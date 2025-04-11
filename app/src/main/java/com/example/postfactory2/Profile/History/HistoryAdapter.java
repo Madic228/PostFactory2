@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.postfactory2.Generate.ResultFragment;
@@ -69,26 +70,51 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
         
         // Настройка кнопки "Доработка"
         holder.regenerateButton.setOnClickListener(v -> {
-            // Создаем фрагмент результата
+            // Создаем ResultFragment с готовым текстом
             ResultFragment resultFragment = new ResultFragment();
-            
-            // Подготавливаем данные для передачи
             Bundle args = new Bundle();
+            
+            // Передаем данные поста
             args.putString("post_theme", post.getTitle());
             args.putString("summarized_text", post.getContent());
-            args.putString("publication_date", post.getDate());
+            args.putBoolean("from_history", true); // Флаг, что открыто из истории
+            
             resultFragment.setArguments(args);
             
-            // Переходим на фрагмент результата
-            if (fragmentManager != null) {
-                fragmentManager.beginTransaction()
-                        .replace(R.id.fragment_container, resultFragment)
-                        .addToBackStack(null)
-                        .commit();
-            } else {
-                Log.e(TAG, "FragmentManager не инициализирован");
-                Toast.makeText(v.getContext(), "Не удалось открыть редактор", Toast.LENGTH_SHORT).show();
-            }
+            // Открываем ResultFragment
+            FragmentManager fragmentManager = ((FragmentActivity) v.getContext()).getSupportFragmentManager();
+            fragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, resultFragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
+
+        // Настройка кнопки "Удалить"
+        holder.deleteButton.setOnClickListener(v -> {
+            // Показываем диалог подтверждения
+            new androidx.appcompat.app.AlertDialog.Builder(v.getContext())
+                    .setTitle("Удаление поста")
+                    .setMessage("Вы уверены, что хотите удалить этот пост?")
+                    .setPositiveButton("Удалить", (dialog, which) -> {
+                        // Удаляем пост
+                        HistoryApi.deleteGeneration(v.getContext(), post.getId(), new HistoryApi.DeleteCallback() {
+                            @Override
+                            public void onSuccess() {
+                                // Удаляем пост из списка
+                                posts.remove(position);
+                                notifyItemRemoved(position);
+                                notifyItemRangeChanged(position, posts.size());
+                                Toast.makeText(v.getContext(), "Пост успешно удален", Toast.LENGTH_SHORT).show();
+                            }
+
+                            @Override
+                            public void onError(String errorMessage) {
+                                Toast.makeText(v.getContext(), errorMessage, Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    })
+                    .setNegativeButton("Отмена", null)
+                    .show();
         });
     }
 
@@ -99,7 +125,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
 
     static class HistoryViewHolder extends RecyclerView.ViewHolder {
         TextView title, excerpt, date, status;
-        MaterialButton shareButton, regenerateButton;
+        MaterialButton shareButton, regenerateButton, deleteButton;
 
         public HistoryViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -109,6 +135,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
             status = itemView.findViewById(R.id.tv_status);
             shareButton = itemView.findViewById(R.id.btn_share);
             regenerateButton = itemView.findViewById(R.id.btn_regenerate);
+            deleteButton = itemView.findViewById(R.id.btn_delete);
         }
     }
 }

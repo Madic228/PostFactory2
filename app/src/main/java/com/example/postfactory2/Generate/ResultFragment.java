@@ -40,6 +40,8 @@ import com.example.postfactory2.Auth.TokenManager;
 public class ResultFragment extends Fragment {
     private static final String TAG = "ResultFragment";
     private static final String TEXT_PROCESSOR_URL = "http://192.168.31.252:8000/text/process";
+    private static final int SERVER_TIMEOUT = 60000; // 60 секунд для генерации
+    private static final int CONNECTION_TIMEOUT = 5000; // 5 секунд для проверки соединения
     private ProgressDialog progressDialog;
 
     private TextView tvPostTheme;
@@ -77,6 +79,7 @@ public class ResultFragment extends Fragment {
             String length = getArguments().getString("length", "Средний");
             String details = getArguments().getString("details", "");
             String[] socialNetworks = getArguments().getStringArray("social_networks");
+            boolean fromHistory = getArguments().getBoolean("from_history", false);
 
             // Сохраняем оригинальный текст
             originalSummarizedText = summarizedText;
@@ -86,8 +89,15 @@ public class ResultFragment extends Fragment {
             tvPublicationDate.setText("Дата публикации: " + publicationDate);
             tvSourceLink.setText(link);
 
-            // Пытаемся обработать текст через API
-            processText(summarizedText, tone, length, details, socialNetworks);
+            // Если открыто из истории, просто показываем текст
+            if (fromHistory) {
+                etGeneratedPost.setText(summarizedText);
+                // Скрываем кнопку перегенерации, так как это пост из истории
+                btnRegenerate.setVisibility(View.GONE);
+            } else {
+                // Пытаемся обработать текст через API
+                processText(summarizedText, tone, length, details, socialNetworks);
+            }
         } else {
             tvPostTheme.setText("Тема не указана");
             tvPublicationDate.setText("Дата не указана");
@@ -151,6 +161,8 @@ public class ResultFragment extends Fragment {
         // Показываем прогресс-бар
         showProgressDialog();
         
+        Log.d(TAG, "Начинаем обработку текста для генерации");
+        
         try {
             // Создаем JSON объект для запроса
             JSONObject requestBody = new JSONObject();
@@ -165,6 +177,8 @@ public class ResultFragment extends Fragment {
             } else {
                 requestBody.put("social_networks", new JSONArray());
             }
+            
+            Log.d(TAG, "Отправляем запрос на генерацию текста: " + TEXT_PROCESSOR_URL);
 
             // Создаем запрос
             JsonObjectRequest request = new JsonObjectRequest(
@@ -174,53 +188,88 @@ public class ResultFragment extends Fragment {
                 response -> {
                     try {
                         hideProgressDialog();
+                        Log.d(TAG, "Получен ответ от сервера генерации: " + response.toString());
                         // Проверяем статус ответа
                         if (response.getString("status").equals("success")) {
                             JSONObject data = response.getJSONObject("data");
-                            // Получаем текст для первой соцсети
-                            String processedText = data.getString(socialNetworks[0]);
+                            // Получаем текст напрямую из поля text
+                            String processedText = data.getString("text");
                             etGeneratedPost.setText(processedText);
                             
                             // Сохраняем в историю
                             saveGenerationToHistory(tvPostTheme.getText().toString(), processedText);
                         } else {
-                            // Если статус не success, используем оригинальный текст
-                            etGeneratedPost.setText(originalSummarizedText);
-                            saveGenerationToHistory(tvPostTheme.getText().toString(), originalSummarizedText);
+                            Log.e(TAG, "Статус ответа не success: " + response.toString());
+                            showOriginalTextWithMessage("Ошибка при генерации. Используется оригинальный текст.");
                         }
                     } catch (JSONException e) {
-                        hideProgressDialog();
-                        Log.e(TAG, "Ошибка при обработке ответа: " + e.getMessage());
-                        etGeneratedPost.setText(originalSummarizedText);
-                        saveGenerationToHistory(tvPostTheme.getText().toString(), originalSummarizedText);
+                        Log.e(TAG, "Ошибка при обработке ответа: " + e.getMessage(), e);
+                        showOriginalTextWithMessage("Ошибка при обработке ответа. Используется оригинальный текст.");
                     }
                 },
                 error -> {
                     hideProgressDialog();
-                    Log.e(TAG, "Ошибка при отправке запроса: " + error.getMessage());
-                    // При ошибке используем оригинальный текст
-                    etGeneratedPost.setText(originalSummarizedText);
-                    saveGenerationToHistory(tvPostTheme.getText().toString(), originalSummarizedText);
+                    Log.e(TAG, "Ошибка при запросе к серверу генерации: " + error.toString(), error);
+                    
+                    // Проверяем причину ошибки
+                    if (error instanceof com.android.volley.NoConnectionError || 
+                        error instanceof com.android.volley.NetworkError) {
+                        // Сервер недоступен или проблемы с сетью
+                        showOriginalTextWithMessage("Сервер генерации недоступен. Используется оригинальный текст.");
+                    } else if (error instanceof com.android.volley.TimeoutError) {
+                        // Таймаут - сервер не ответил вовремя
+                        showOriginalTextWithMessage("Время ожидания генерации истекло. Используется оригинальный текст.");
+                    } else if (error.networkResponse != null) {
+                        // Если есть ответ от сервера, но с ошибкой
+                        Log.e(TAG, "Код ответа: " + error.networkResponse.statusCode);
+                        showOriginalTextWithMessage("Ошибка сервера. Используется оригинальный текст.");
+                    } else {
+                        // Другие неизвестные ошибки
+                        showOriginalTextWithMessage("Непредвиденная ошибка. Используется оригинальный текст.");
+                    }
                 }
             );
 
-            // Увеличиваем таймаут и количество попыток
+            // Настройка таймаутов
             request.setRetryPolicy(new DefaultRetryPolicy(
-                60000, // 60 секунд таймаут
-                3,     // 3 попытки
+                SERVER_TIMEOUT,     // 60 секунд таймаут для генерации
+                0,                  // Без повторных попыток
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-            ));
+            ) {
+                @Override
+                public int getCurrentTimeout() {
+                    return SERVER_TIMEOUT;
+                }
+                
+                @Override
+                public int getCurrentRetryCount() {
+                    return 0;
+                }
+                
+                @Override
+                public void retry(com.android.volley.VolleyError error) throws com.android.volley.VolleyError {
+                    throw error;
+                }
+            });
 
             // Добавляем запрос в очередь
             RequestQueue queue = Volley.newRequestQueue(requireContext());
             queue.add(request);
 
         } catch (JSONException e) {
-            hideProgressDialog();
-            Log.e(TAG, "Ошибка при создании запроса: " + e.getMessage());
-            etGeneratedPost.setText(originalSummarizedText);
-            saveGenerationToHistory(tvPostTheme.getText().toString(), originalSummarizedText);
+            Log.e(TAG, "Ошибка при создании JSON запроса: " + e.getMessage(), e);
+            showOriginalTextWithMessage("Ошибка при подготовке запроса. Используется оригинальный текст.");
+        } catch (Exception e) {
+            Log.e(TAG, "Непредвиденная ошибка при обработке текста: " + e.getMessage(), e);
+            showOriginalTextWithMessage("Непредвиденная ошибка. Используется оригинальный текст.");
         }
+    }
+
+    private void showOriginalTextWithMessage(String message) {
+        hideProgressDialog();
+        etGeneratedPost.setText(originalSummarizedText);
+        saveGenerationToHistory(tvPostTheme.getText().toString(), originalSummarizedText);
+        Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
     }
 
     private void toggleEditMode() {

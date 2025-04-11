@@ -162,4 +162,77 @@ public class HistoryApi {
         void onSuccess(List<Post> posts);
         void onError(String errorMessage);
     }
+
+    public static void deleteGeneration(Context context, int generationId, final DeleteCallback callback) {
+        RequestQueue queue = Volley.newRequestQueue(context);
+        String url = BASE_URL + "/generations/" + generationId;
+        
+        // Получаем токен через TokenManager
+        TokenManager tokenManager = TokenManager.getInstance(context);
+        
+        // Проверяем, вошел ли пользователь и действителен ли токен
+        if (!tokenManager.isLoggedIn()) {
+            Log.e(TAG, "Пользователь не авторизован");
+            callback.onError("Пользователь не авторизован. Выполните вход.");
+            return;
+        }
+        
+        final String token = tokenManager.getToken();
+        Log.d(TAG, "Запрос на удаление генерации ID: " + generationId);
+        
+        com.android.volley.toolbox.StringRequest request = new com.android.volley.toolbox.StringRequest(
+                Request.Method.DELETE,
+                url,
+                response -> {
+                    Log.d(TAG, "Генерация успешно удалена");
+                    callback.onSuccess();
+                },
+                error -> {
+                    Log.e(TAG, "Ошибка при удалении: " + error.toString());
+                    
+                    if (error.networkResponse != null) {
+                        int statusCode = error.networkResponse.statusCode;
+                        Log.e(TAG, "Код ответа: " + statusCode);
+                        
+                        if (statusCode == 401) {
+                            // Токен истек, пробуем обновить
+                            tokenManager.refreshToken(new TokenManager.TokenRefreshCallback() {
+                                @Override
+                                public void onTokenRefreshed() {
+                                    deleteGeneration(context, generationId, callback);
+                                }
+
+                                @Override
+                                public void onTokenRefreshFailed(String errorMessage) {
+                                    callback.onError("Срок действия сессии истек. Выполните повторный вход.");
+                                }
+                            });
+                            return;
+                        }
+                    }
+                    
+                    callback.onError("Ошибка при удалении: " + error.getMessage());
+                }) {
+            
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<>();
+                headers.put("Authorization", "Bearer " + token);
+                headers.put("Content-Type", "application/json");
+                return headers;
+            }
+        };
+        
+        request.setRetryPolicy(new DefaultRetryPolicy(
+                30000,
+                1,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+        
+        queue.add(request);
+    }
+    
+    public interface DeleteCallback {
+        void onSuccess();
+        void onError(String errorMessage);
+    }
 } 
