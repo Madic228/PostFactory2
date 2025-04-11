@@ -74,15 +74,21 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
             ResultFragment resultFragment = new ResultFragment();
             Bundle args = new Bundle();
             
-            // Передаем данные поста
+            // Передаем все необходимые данные поста
             args.putString("post_theme", post.getTitle());
             args.putString("summarized_text", post.getContent());
-            args.putBoolean("from_history", true); // Флаг, что открыто из истории
+            args.putString("publication_date", post.getDate());
+            args.putString("source", "История генераций");
+            args.putString("link", post.getSocialNetworkUrl() != null ? post.getSocialNetworkUrl() : "");
+            args.putString("tone", "Информативный");
+            args.putString("length", "Средний");
+            args.putString("details", "");
+            args.putBoolean("from_history", true);
+            args.putInt("post_id", post.getId());
             
             resultFragment.setArguments(args);
             
-            // Открываем ResultFragment
-            FragmentManager fragmentManager = ((FragmentActivity) v.getContext()).getSupportFragmentManager();
+            // Открываем ResultFragment используя сохраненный fragmentManager
             fragmentManager.beginTransaction()
                     .replace(R.id.fragment_container, resultFragment)
                     .addToBackStack(null)

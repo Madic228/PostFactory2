@@ -279,16 +279,30 @@ public class ResultFragment extends Fragment {
         etGeneratedPost.setCursorVisible(isEditable);
 
         if (isEditable) {
-            btnEdit.setImageResource(R.drawable.ic_save); // Заменить значок на "Сохранить"
+            btnEdit.setImageResource(R.drawable.ic_save);
             Toast.makeText(getContext(), "Режим редактирования включен", Toast.LENGTH_SHORT).show();
         } else {
-            btnEdit.setImageResource(R.drawable.ic_edit); // Заменить значок на "Редактировать"
+            btnEdit.setImageResource(R.drawable.ic_edit);
             Toast.makeText(getContext(), "Изменения сохранены", Toast.LENGTH_SHORT).show();
             
-            // Сохраняем изменения в историю
+            // Сохраняем изменения
             String editedText = etGeneratedPost.getText().toString();
             String postTheme = tvPostTheme.getText().toString();
-            saveGenerationToHistory(postTheme, editedText);
+            
+            // Проверяем, редактируем ли мы существующий пост
+            if (getArguments() != null && getArguments().containsKey("post_id")) {
+                int postId = getArguments().getInt("post_id", -1);
+                if (postId != -1) {
+                    // Обновляем существующий пост
+                    updatePostInHistory(postId, postTheme, editedText);
+                } else {
+                    // Создаем новый пост
+                    saveGenerationToHistory(postTheme, editedText);
+                }
+            } else {
+                // Создаем новый пост
+                saveGenerationToHistory(postTheme, editedText);
+            }
         }
     }
     
@@ -391,6 +405,83 @@ public class ResultFragment extends Fragment {
         } catch (Exception e) {
             Log.e(TAG, "Непредвиденная ошибка при сохранении в историю: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    // Метод для обновления существующего поста
+    private void updatePostInHistory(int postId, String title, String content) {
+        if (!isAdded() || getContext() == null) {
+            Log.e(TAG, "Fragment not attached to context");
+            return;
+        }
+
+        TokenManager tokenManager = TokenManager.getInstance(getContext());
+        String token = tokenManager.getToken();
+        
+        if (token == null || token.isEmpty()) {
+            Log.e(TAG, "Token is null or empty");
+            return;
+        }
+
+        try {
+            RequestQueue queue = Volley.newRequestQueue(getContext());
+            String url = "http://2.59.40.125:8000/api/generations/" + postId + "/edit";
+            
+            JSONObject jsonBody = new JSONObject();
+            jsonBody.put("title", title);
+            jsonBody.put("content", content);
+            
+            Log.d(TAG, "Отправляем данные на обновление поста: " + jsonBody.toString());
+            
+            JsonObjectRequest request = new JsonObjectRequest(
+                    Request.Method.PUT,
+                    url,
+                    jsonBody,
+                    response -> {
+                        Log.d(TAG, "Пост успешно обновлен: " + response.toString());
+                        Toast.makeText(requireContext(), "Изменения сохранены", Toast.LENGTH_SHORT).show();
+                    },
+                    error -> {
+                        Log.e(TAG, "Ошибка при обновлении поста: " + error.toString());
+                        
+                        if (error.networkResponse != null) {
+                            int statusCode = error.networkResponse.statusCode;
+                            String responseData = new String(error.networkResponse.data);
+                            Log.e(TAG, "Код ошибки: " + statusCode + ", Ответ: " + responseData);
+                            
+                            if (statusCode == 401) {
+                                Toast.makeText(requireContext(), "Ошибка авторизации. Пожалуйста, войдите снова", Toast.LENGTH_LONG).show();
+                            } else if (statusCode == 404) {
+                                Toast.makeText(requireContext(), "Пост не найден", Toast.LENGTH_LONG).show();
+                            } else if (statusCode == 422) {
+                                Toast.makeText(requireContext(), "Ошибка валидации данных", Toast.LENGTH_LONG).show();
+                            } else {
+                                Toast.makeText(requireContext(), "Не удалось сохранить изменения. Код ошибки: " + statusCode, Toast.LENGTH_LONG).show();
+                            }
+                        } else {
+                            Toast.makeText(requireContext(), "Не удалось сохранить изменения", Toast.LENGTH_SHORT).show();
+                        }
+                    }) {
+                @Override
+                public Map<String, String> getHeaders() {
+                    Map<String, String> headers = new HashMap<>();
+                    headers.put("Authorization", "Bearer " + token);
+                    headers.put("Content-Type", "application/json");
+                    return headers;
+                }
+            };
+            
+            // Устанавливаем политику повторов
+            request.setRetryPolicy(new DefaultRetryPolicy(
+                    30000, // 30 секунд тайм-аут
+                    1, // Максимальное количество повторных попыток
+                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+            
+            queue.add(request);
+        } catch (JSONException e) {
+            Log.e(TAG, "Ошибка JSON при обновлении поста: " + e.getMessage());
+            e.printStackTrace();
+            Toast.makeText(requireContext(), "Ошибка при подготовке данных", Toast.LENGTH_SHORT).show();
         }
     }
 

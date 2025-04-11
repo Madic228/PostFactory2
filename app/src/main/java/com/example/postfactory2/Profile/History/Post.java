@@ -9,6 +9,15 @@ public class Post {
     private String socialNetworkUrl;
 
     public Post(String title, String content, String date, String status) {
+        this.id = -1;
+        this.title = title;
+        this.content = content;
+        this.date = date;
+        this.status = status;
+    }
+
+    public Post(int id, String title, String content, String date, String status) {
+        this.id = id;
         this.title = title;
         this.content = content;
         this.date = date;
