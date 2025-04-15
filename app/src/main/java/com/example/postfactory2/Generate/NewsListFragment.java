@@ -21,9 +21,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.postfactory2.R;
+import com.android.volley.DefaultRetryPolicy;
+import org.json.JSONException;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -194,84 +197,83 @@ public class    NewsListFragment extends Fragment {
         // Запускаем суммаризацию только если есть статьи для обновления И мы не возвращаемся из ResultFragment
         if (!articlesToUpdate.isEmpty() && !isReturningFromResult) {
             showProgressDialog();
-            Toast.makeText(requireContext(), "Проверка доступности сервера суммаризации...", Toast.LENGTH_SHORT).show();
-            updateSummarizedTexts(articlesToUpdate, positions);
+            Toast.makeText(requireContext(), "Начинаем суммаризацию текста...", Toast.LENGTH_SHORT).show();
+            startSummarization(articlesToUpdate, positions);
         }
     }
 
-    private void updateSummarizedTexts(List<NewsItem> articles, List<Integer> positions) {
-        String url = "http://192.168.31.252:8000/api/summarize/summarize/check-summaries";
+    private void startSummarization(List<NewsItem> articles, List<Integer> positions) {
+        String url = "http://192.168.31.252:8000/summarize/check-summaries";
+        Log.d(TAG, "Starting summarization with URL: " + url);
         
-        StringRequest request = new StringRequest(Request.Method.POST, url,
-                response -> {
-                    try {
-                        String utf8Response = new String(response.getBytes("ISO-8859-1"), "UTF-8");
-                        Log.d(TAG, "API Response: " + utf8Response);
-                        
-                        JSONObject jsonResponse = new JSONObject(utf8Response);
-                        String message = jsonResponse.getString("message");
-                        Log.d(TAG, "API Message: " + message);
-                        
-                        // Всегда скрываем диалог, независимо от ответа
-                        hideProgressDialog();
-                        
-                        if (message.equals("Суммаризация завершена")) {
-                            boolean isReturningFromResult = getArguments() != null && getArguments().getBoolean("from_result", false);
-                            if (!isReturningFromResult) {
-                                Toast.makeText(requireContext(), "Суммаризация завершена!", Toast.LENGTH_SHORT).show();
+        try {
+            // Создаем массив заголовков
+            JSONArray titlesArray = new JSONArray();
+            for (NewsItem article : articles) {
+                titlesArray.put(article.getTitle());
+            }
+            
+            StringRequest request = new StringRequest(
+                    Request.Method.POST,
+                    url,
+                    response -> {
+                        try {
+                            // Преобразуем ответ в правильную кодировку
+                            String decodedResponse = new String(response.getBytes("ISO-8859-1"), "UTF-8");
+                            Log.d(TAG, "Ответ от сервера суммаризации: " + decodedResponse);
+                            
+                            // Проверяем статус ответа
+                            if (decodedResponse.contains("Суммаризация завершена")) {
+                                // Запускаем проверку обновленных данных
+                                startUpdateCheck();
+                            } else {
+                                hideProgressDialog();
+                                Toast.makeText(requireContext(), "Ошибка при суммаризации: " + decodedResponse, Toast.LENGTH_SHORT).show();
                             }
-                            loadUpdatedNews();
-                        } else {
-                            // Логируем другие сообщения
-                            Log.d(TAG, "Получено сообщение от сервера: " + message);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Ошибка при обработке ответа суммаризации: " + e.getMessage());
+                            hideProgressDialog();
+                            Toast.makeText(requireContext(), "Ошибка обработки ответа", Toast.LENGTH_SHORT).show();
                         }
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error processing API response: " + e.getMessage(), e);
+                    },
+                    error -> {
+                        Log.e(TAG, "Ошибка при запросе суммаризации: " + error.toString());
+                        if (error.networkResponse != null) {
+                            try {
+                                String responseBody = new String(error.networkResponse.data, "utf-8");
+                                Log.e(TAG, "Server error details: " + error.networkResponse.statusCode);
+                                Log.e(TAG, "Server error data: " + responseBody);
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error reading error response: " + e.getMessage());
+                            }
+                        }
                         hideProgressDialog();
+                        Toast.makeText(requireContext(), "Ошибка при запросе суммаризации", Toast.LENGTH_SHORT).show();
                     }
-                },
-                error -> {
-                    Log.e(TAG, "Error making API request: " + error.getMessage(), error);
-                    hideProgressDialog();
-                    
-                    // Показываем ошибку о недоступности сервера суммаризации
-                    Toast.makeText(requireContext(), 
-                        "Сервер для суммаризации недоступен. Вы можете продолжить работу с приложением.", 
-                        Toast.LENGTH_LONG).show();
-                    
-                    // Обновляем данные из основного сервера, чтобы приложение продолжало работать
-                    loadUpdatedNews();
+            ) {
+                @Override
+                public String getBodyContentType() {
+                    return "application/json; charset=utf-8";
                 }
-        ) {
-            @Override
-            public byte[] getBody() {
-                try {
-                    JSONArray titlesArray = new JSONArray();
-                    for (NewsItem article : articles) {
-                        titlesArray.put(article.getTitle());
-                    }
-                    return titlesArray.toString().getBytes("utf-8");
-                } catch (Exception e) {
-                    Log.e(TAG, "Error creating request body: " + e.getMessage(), e);
-                    hideProgressDialog();
-                    return null;
+
+                @Override
+                public byte[] getBody() {
+                    return titlesArray.toString().getBytes();
                 }
-            }
-
-            @Override
-            public String getBodyContentType() {
-                return "application/json; charset=utf-8";
-            }
-        };
-
-        // Уменьшаем таймаут для быстрой проверки доступности сервера
-        request.setRetryPolicy(new com.android.volley.DefaultRetryPolicy(
-                5000, // 5 секунд вместо 30
-                1,    // Только 1 повторная попытка
-                com.android.volley.DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-        ));
-
-        requestQueue.add(request);
+            };
+            
+            request.setRetryPolicy(new DefaultRetryPolicy(
+                    30000,
+                    3,      // 3 попытки
+                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+            ));
+            
+            requestQueue.add(request);
+        } catch (Exception e) {
+            Log.e(TAG, "Ошибка при подготовке запроса суммаризации: " + e.getMessage());
+            hideProgressDialog();
+            Toast.makeText(requireContext(), "Ошибка подготовки запроса", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void startUpdateCheck() {
@@ -285,6 +287,9 @@ public class    NewsListFragment extends Fragment {
                     loadUpdatedNews();
                     attempts++;
                     new Handler().postDelayed(this, 5000);
+                } else {
+                    hideProgressDialog();
+                    Toast.makeText(requireContext(), "Не удалось получить суммаризированный текст", Toast.LENGTH_SHORT).show();
                 }
             }
         }, 5000);

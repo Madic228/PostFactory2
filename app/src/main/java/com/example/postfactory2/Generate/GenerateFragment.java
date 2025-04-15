@@ -31,6 +31,9 @@ import java.util.List;
 
 import com.android.volley.DefaultRetryPolicy;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class GenerateFragment extends Fragment {
 
     private Spinner spinnerTheme, spinnerTone;
@@ -154,6 +157,7 @@ public class GenerateFragment extends Fragment {
             Log.i(TAG, "Request body: " + requestBody.toString());
         } catch (Exception e) {
             Log.e(TAG, "Error creating request body: " + e.getMessage(), e);
+            Toast.makeText(getContext(), "Ошибка подготовки запроса", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -194,8 +198,17 @@ public class GenerateFragment extends Fragment {
                     }
                 },
                 error -> {
-                    Log.e(TAG, "Error during request: " + error.toString(), error);
-                    Toast.makeText(getContext(), "Ошибка запроса: " + error.toString(), Toast.LENGTH_LONG).show();
+                    Log.e(TAG, "Error during request: " + error.toString());
+                    if (error.networkResponse != null) {
+                        Log.e(TAG, "Status code: " + error.networkResponse.statusCode);
+                        try {
+                            String responseBody = new String(error.networkResponse.data, "utf-8");
+                            Log.e(TAG, "Response body: " + responseBody);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error reading error response: " + e.getMessage());
+                        }
+                    }
+                    Toast.makeText(getContext(), "Ошибка сервера. Попробуйте позже.", Toast.LENGTH_LONG).show();
                 }) {
             @Override
             public String getBodyContentType() {
@@ -211,12 +224,19 @@ public class GenerateFragment extends Fragment {
                     return null;
                 }
             }
+
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String> headers = new HashMap<>();
+                headers.put("Content-Type", "application/json; charset=utf-8");
+                return headers;
+            }
         };
 
-        // Увеличиваем время ожидания
+        // Увеличиваем время ожидания и количество попыток
         stringRequest.setRetryPolicy(new DefaultRetryPolicy(
                 30000, // Время ожидания (30 секунд)
-                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                3,     // Количество попыток
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
         ));
 

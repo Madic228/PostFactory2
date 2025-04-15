@@ -15,6 +15,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.postfactory2.R;
 import com.example.postfactory2.utils.EnvConfig;
@@ -249,50 +250,46 @@ public class UpdateScheduleFragment extends Fragment {
 
     // Метод для запуска суммаризации всех новостей
     private void startSummarization() {
-        //String serverIp = EnvConfig.get("summarization_server_ip", "2.59.40.125");
-        //String url = String.format("http://%s:8000/api/summarize/all?mode=full", serverIp);
-
-        String url = ("http://192.168.31.252:8000/api/summarize/all?mode=full");
+        String url = "http://192.168.31.252:8000/all?mode=full";
         Log.d(TAG, "Start summarization request to: " + url);
-        //Log.d(TAG, "Using server IP from .env: " + serverIp);
 
         // Показываем диалог загрузки
         progressDialog.setMessage("Запуск суммаризации... Это может занять продолжительное время.");
         progressDialog.show();
 
         try {
-            JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.POST, url, null,
-                    new Response.Listener<JSONObject>() {
-                        @Override
-                        public void onResponse(JSONObject response) {
-                            Log.d(TAG, "Response: " + response.toString());
-                            progressDialog.dismiss();
-                            Toast.makeText(getContext(), "Суммаризация успешно запущена!", Toast.LENGTH_LONG).show();
-                        }
+            StringRequest request = new StringRequest(Request.Method.POST, url,
+                    response -> {
+                        Log.d(TAG, "Response: " + response);
+                        progressDialog.dismiss();
+                        Toast.makeText(getContext(), "Суммаризация успешно запущена!", Toast.LENGTH_LONG).show();
                     },
-                    new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-                            progressDialog.dismiss();
-                            String errorMessage = "Ошибка сети";
-                            if (error.networkResponse != null) {
-                                errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
+                    error -> {
+                        progressDialog.dismiss();
+                        String errorMessage = "Ошибка сети";
+                        if (error.networkResponse != null) {
+                            errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
+                            try {
+                                String responseBody = new String(error.networkResponse.data, "utf-8");
                                 Log.e(TAG, "Server error details: " + error.networkResponse.statusCode);
-                                Log.e(TAG, "Server error data: " + new String(error.networkResponse.data));
+                                Log.e(TAG, "Server error data: " + responseBody);
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error reading error response: " + e.getMessage());
                             }
-                            Log.e(TAG, "Error starting summarization: " + errorMessage, error);
-                            Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
                         }
-                    });
+                        Log.e(TAG, "Error starting summarization: " + errorMessage, error);
+                        Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+                    }
+            );
 
             // Увеличиваем таймаут до 10 минут из-за длительности процесса суммаризации
-            jsonRequest.setRetryPolicy(new DefaultRetryPolicy(
+            request.setRetryPolicy(new DefaultRetryPolicy(
                     600000, // 10 минут
-                    DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                    3,      // 3 попытки
                     DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
             ));
 
-            requestQueue.add(jsonRequest);
+            requestQueue.add(request);
         } catch (Exception e) {
             progressDialog.dismiss();
             Log.e(TAG, "Exception during request preparation", e);
