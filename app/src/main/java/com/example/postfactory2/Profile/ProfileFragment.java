@@ -65,7 +65,15 @@ public class ProfileFragment extends Fragment {
         view.findViewById(R.id.change_photo_text).setOnClickListener(v -> openImagePicker());
         view.findViewById(R.id.history_button).setOnClickListener(v -> openHistory());
         view.findViewById(R.id.update_button).setOnClickListener(v -> openUpdate());
-        view.findViewById(R.id.about_button).setOnClickListener(v -> openAbout());
+        Button aboutButton = view.findViewById(R.id.about_button);
+        aboutButton.setOnClickListener(v -> {
+            AboutFragment aboutFragment = new AboutFragment();
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, aboutFragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
         
         // Добавляем кнопку выхода из аккаунта
         Button logoutButton = view.findViewById(R.id.logout_button);
