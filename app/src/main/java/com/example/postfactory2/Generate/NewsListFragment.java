@@ -203,7 +203,7 @@ public class    NewsListFragment extends Fragment {
     }
 
     private void startSummarization(List<NewsItem> articles, List<Integer> positions) {
-        String url = "http://192.168.31.252:8000/summarize/check-summaries";
+        String url = "http://192.168.0.103:8000/summarize/check-summaries";
         Log.d(TAG, "Starting summarization with URL: " + url);
         
         try {

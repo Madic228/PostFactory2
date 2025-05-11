@@ -39,7 +39,7 @@ import com.example.postfactory2.Auth.TokenManager;
 
 public class ResultFragment extends Fragment {
     private static final String TAG = "ResultFragment";
-    private static final String TEXT_PROCESSOR_URL = "http://192.168.31.252:8000/text/process";
+    private static final String TEXT_PROCESSOR_URL = "http://192.168.0.103:8000/text/process";
     private static final int SERVER_TIMEOUT = 60000; // 60 секунд для генерации
     private static final int CONNECTION_TIMEOUT = 5000; // 5 секунд для проверки соединения
     private ProgressDialog progressDialog;

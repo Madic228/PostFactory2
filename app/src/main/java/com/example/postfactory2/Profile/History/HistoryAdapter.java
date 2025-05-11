@@ -98,7 +98,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
         // Настройка кнопки "Удалить"
         holder.deleteButton.setOnClickListener(v -> {
             // Показываем диалог подтверждения
-            new androidx.appcompat.app.AlertDialog.Builder(v.getContext())
+            new androidx.appcompat.app.AlertDialog.Builder(v.getContext(), androidx.appcompat.R.style.Theme_AppCompat_Light_Dialog_Alert)
                     .setTitle("Удаление поста")
                     .setMessage("Вы уверены, что хотите удалить этот пост?")
                     .setPositiveButton("Удалить", (dialog, which) -> {

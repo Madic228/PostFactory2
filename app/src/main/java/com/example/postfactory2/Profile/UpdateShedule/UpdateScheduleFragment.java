@@ -250,7 +250,7 @@ public class UpdateScheduleFragment extends Fragment {
 
     // Метод для запуска суммаризации всех новостей
     private void startSummarization() {
-        String url = "http://192.168.31.252:8000/all?mode=full";
+        String url = "http://192.168.0.103:8000/all?mode=full";
         Log.d(TAG, "Start summarization request to: " + url);
 
         // Показываем диалог загрузки
