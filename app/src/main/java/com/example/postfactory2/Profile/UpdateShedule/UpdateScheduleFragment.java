@@ -1,5 +1,6 @@
 package com.example.postfactory2.Profile.UpdateShedule;
 
+import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.util.Log;
@@ -20,14 +21,19 @@ import com.android.volley.toolbox.Volley;
 import com.example.postfactory2.R;
 import com.example.postfactory2.utils.EnvConfig;
 import org.json.JSONObject;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class UpdateScheduleFragment extends Fragment {
 
     private RequestQueue requestQueue;
-    private EditText intervalEditText, articlesEditText;
+    private EditText intervalEditText, articlesEditText, startDateEditText, endDateEditText;
     private ProgressDialog progressDialog;
+    private Calendar startDate, endDate;
+    private SimpleDateFormat dateFormatter;
 
     private static final String TAG = "UpdateScheduleFragment"; // Добавляем тег для логов
 
@@ -41,97 +47,92 @@ public class UpdateScheduleFragment extends Fragment {
         progressDialog.setMessage("Пожалуйста, подождите...");
         progressDialog.setCancelable(false);
 
+        // Инициализация форматтера даты
+        dateFormatter = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
+        startDate = Calendar.getInstance();
+        endDate = Calendar.getInstance();
+        endDate.add(Calendar.DAY_OF_MONTH, 7); // По умолчанию конечная дата через неделю
+
+        // Инициализация полей ввода
         intervalEditText = rootView.findViewById(R.id.intervalEditText);
         articlesEditText = rootView.findViewById(R.id.articlesEditText);
+        startDateEditText = rootView.findViewById(R.id.startDateEditText);
+        endDateEditText = rootView.findViewById(R.id.endDateEditText);
 
-        // Устанавливаем значения по умолчанию, если поля пустые
+        // Устанавливаем значения по умолчанию
         if (intervalEditText.getText().toString().isEmpty()) {
             intervalEditText.setText("6");  // 6 часов по умолчанию
         }
-
         if (articlesEditText.getText().toString().isEmpty()) {
             articlesEditText.setText("10");  // 10 постов по умолчанию
         }
+        
+        // Устанавливаем начальные даты
+        startDateEditText.setText(dateFormatter.format(startDate.getTime()));
+        endDateEditText.setText(dateFormatter.format(endDate.getTime()));
+
+        // Настройка выбора дат
+        setupDatePicker(startDateEditText, startDate);
+        setupDatePicker(endDateEditText, endDate);
 
         // Инициализация RequestQueue
         requestQueue = Volley.newRequestQueue(getContext());
 
-        rootView.findViewById(R.id.updateButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                updateSchedule();
-            }
-        });
-
-        rootView.findViewById(R.id.startParsingButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startParsing();
-            }
-        });
-
-        rootView.findViewById(R.id.deleteScheduleButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                deleteSchedule();
-            }
-        });
-
-        rootView.findViewById(R.id.startSummarizeButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startSummarization();
-            }
-        });
+        // Настройка кнопок
+        rootView.findViewById(R.id.updateButton).setOnClickListener(v -> updateSchedule());
+        rootView.findViewById(R.id.startParsingButton).setOnClickListener(v -> startParsing());
+        rootView.findViewById(R.id.deleteScheduleButton).setOnClickListener(v -> deleteSchedule());
+        rootView.findViewById(R.id.startSummarizeButton).setOnClickListener(v -> startSummarization());
 
         return rootView;
     }
 
+    private void setupDatePicker(EditText editText, Calendar calendar) {
+        editText.setOnClickListener(v -> {
+            DatePickerDialog datePickerDialog = new DatePickerDialog(
+                requireContext(),
+                (view, year, month, dayOfMonth) -> {
+                    calendar.set(year, month, dayOfMonth);
+                    editText.setText(dateFormatter.format(calendar.getTime()));
+                },
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH)
+            );
+            datePickerDialog.show();
+        });
+    }
+
     // Метод для обновления расписания
     private void updateSchedule() {
-        String intervalText = intervalEditText.getText().toString();
-        String articlesText = articlesEditText.getText().toString();
+        if (!validateInputs()) return;
 
-        // Проверка на пустые поля
-        if (intervalText.isEmpty() || articlesText.isEmpty()) {
-            Toast.makeText(getContext(), "Пожалуйста, заполните все поля.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        int intervalHours = Integer.parseInt(intervalText);
-        int maxArticles = Integer.parseInt(articlesText);
-
-        // Проверка на отрицательные значения
-        if (intervalHours < 0 || maxArticles < 0) {
-            Toast.makeText(getContext(), "Значения не могут быть меньше 0.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        String url = String.format("http://2.59.40.125:8000/api/parse/update_schedule/?interval_hours=%d&max_articles=%d",
-                intervalHours, maxArticles);
-
-        Log.d(TAG, "Update schedule: intervalHours = " + intervalHours + ", maxArticles = " + maxArticles);
-
+        String url = "http://2.59.40.125:8000/api/parse/update_schedule/";
+        
         try {
-            JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.PUT, url, null,
-                    new Response.Listener<JSONObject>() {
-                        @Override
-                        public void onResponse(JSONObject response) {
-                            Log.d(TAG, "Response: " + response.toString());
-                            Toast.makeText(getContext(), "Интервал обновлен!", Toast.LENGTH_SHORT).show();
-                        }
-                    },
-                    new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-                            String errorMessage = "Ошибка сети";
-                            if (error.networkResponse != null) {
-                                errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
-                            }
-                            Log.e(TAG, "Error updating schedule: " + errorMessage, error);
-                            Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
-                        }
-                    });
+            JSONObject requestBody = new JSONObject();
+            requestBody.put("interval_hours", Integer.parseInt(intervalEditText.getText().toString()));
+            requestBody.put("start_date", startDateEditText.getText().toString());
+            requestBody.put("end_date", endDateEditText.getText().toString());
+            requestBody.put("max_articles", Integer.parseInt(articlesEditText.getText().toString()));
+
+            JsonObjectRequest jsonRequest = new JsonObjectRequest(
+                Request.Method.PUT,
+                url,
+                requestBody,
+                response -> {
+                    Log.d(TAG, "Response: " + response.toString());
+                    Toast.makeText(getContext(), "Расписание обновлено!", Toast.LENGTH_SHORT).show();
+                },
+                error -> {
+                    String errorMessage = "Ошибка сети";
+                    if (error.networkResponse != null) {
+                        errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
+                    }
+                    Log.e(TAG, "Error updating schedule: " + errorMessage, error);
+                    Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+                }
+            );
 
             requestQueue.add(jsonRequest);
         } catch (Exception e) {
@@ -142,61 +143,44 @@ public class UpdateScheduleFragment extends Fragment {
 
     // Эндпоинт для запуска парсинга всех тем
     private void startParsing() {
-        String intervalText = intervalEditText.getText().toString();
-        String articlesText = articlesEditText.getText().toString();
+        if (!validateInputs()) return;
 
-        // Проверка на пустые поля
-        if (intervalText.isEmpty() || articlesText.isEmpty()) {
-            Toast.makeText(getContext(), "Пожалуйста, заполните все поля.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        int intervalHours = Integer.parseInt(intervalText);
-        int maxArticles = Integer.parseInt(articlesText);
-
-        // Проверка на отрицательные значения
-        if (intervalHours < 0 || maxArticles < 0) {
-            Toast.makeText(getContext(), "Значения не могут быть меньше 0.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        String url = String.format("http://2.59.40.125:8000/api/parse/parse_all/?interval_hours=%d&max_articles=%d",
-                intervalHours, maxArticles);
-
-        Log.d(TAG, "Start parsing: intervalHours = " + intervalHours + ", maxArticles = " + maxArticles);
-
-        // Показываем диалог загрузки
+        String url = "http://2.59.40.125:8000/api/parse/parse_period/";
+        
         progressDialog.setMessage("Запуск парсинга... Это может занять несколько минут.");
         progressDialog.show();
 
         try {
-            JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.POST, url, null,
-                    new Response.Listener<JSONObject>() {
-                        @Override
-                        public void onResponse(JSONObject response) {
-                            Log.d(TAG, "Response: " + response.toString());
-                            progressDialog.dismiss();
-                            Toast.makeText(getContext(), "Парсинг всех тем успешно запущен!", Toast.LENGTH_LONG).show();
-                        }
-                    },
-                    new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-                            progressDialog.dismiss();
-                            String errorMessage = "Ошибка сети";
-                            if (error.networkResponse != null) {
-                                errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
-                            }
-                            Log.e(TAG, "Error starting parsing: " + errorMessage, error);
-                            Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
-                        }
-                    });
+            JSONObject requestBody = new JSONObject();
+            requestBody.put("interval_hours", Integer.parseInt(intervalEditText.getText().toString()));
+            requestBody.put("start_date", startDateEditText.getText().toString());
+            requestBody.put("end_date", endDateEditText.getText().toString());
+            requestBody.put("max_articles", Integer.parseInt(articlesEditText.getText().toString()));
 
-            // Увеличиваем таймаут до 5 минут
+            JsonObjectRequest jsonRequest = new JsonObjectRequest(
+                Request.Method.POST,
+                url,
+                requestBody,
+                response -> {
+                    Log.d(TAG, "Response: " + response.toString());
+                    progressDialog.dismiss();
+                    Toast.makeText(getContext(), "Парсинг успешно запущен!", Toast.LENGTH_LONG).show();
+                },
+                error -> {
+                    progressDialog.dismiss();
+                    String errorMessage = "Ошибка сети";
+                    if (error.networkResponse != null) {
+                        errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
+                    }
+                    Log.e(TAG, "Error starting parsing: " + errorMessage, error);
+                    Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+                }
+            );
+
             jsonRequest.setRetryPolicy(new DefaultRetryPolicy(
-                    300000, // 5 минут
-                    DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+                300000, // 5 минут
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
             ));
 
             requestQueue.add(jsonRequest);
@@ -211,41 +195,25 @@ public class UpdateScheduleFragment extends Fragment {
     private void deleteSchedule() {
         String url = "http://2.59.40.125:8000/api/parse/delete_schedule/";
 
-        Log.d(TAG, "Delete schedule request");
-
-        try {
-            JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.DELETE, url, null,
-                    new Response.Listener<JSONObject>() {
-                        @Override
-                        public void onResponse(JSONObject response) {
-                            Log.d(TAG, "Response: " + response.toString());
-                            Toast.makeText(getContext(), "Парсинг удален из расписания!", Toast.LENGTH_SHORT).show();
-                        }
-                    },
-                    new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-                            String errorMessage = "Ошибка сети";
-                            if (error.networkResponse != null) {
-                                errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
-                            }
-                            Log.e(TAG, "Error deleting schedule: " + errorMessage, error);
-                            Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
-                        }
-                    }) {
-                @Override
-                public Map<String, String> getHeaders() {
-                    Map<String, String> headers = new HashMap<>();
-                    headers.put("Content-Type", "application/json; charset=utf-8");
-                    return headers;
+        JsonObjectRequest jsonRequest = new JsonObjectRequest(
+            Request.Method.DELETE,
+            url,
+            null,
+            response -> {
+                Log.d(TAG, "Response: " + response.toString());
+                Toast.makeText(getContext(), "Расписание удалено!", Toast.LENGTH_SHORT).show();
+            },
+            error -> {
+                String errorMessage = "Ошибка сети";
+                if (error.networkResponse != null) {
+                    errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
                 }
-            };
+                Log.e(TAG, "Error deleting schedule: " + errorMessage, error);
+                Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+            }
+        );
 
-            requestQueue.add(jsonRequest);
-        } catch (Exception e) {
-            Log.e(TAG, "Exception during request preparation", e);
-            Toast.makeText(getContext(), "Ошибка при отправке запроса", Toast.LENGTH_LONG).show();
-        }
+        requestQueue.add(jsonRequest);
     }
 
     // Метод для запуска суммаризации всех новостей
@@ -295,6 +263,31 @@ public class UpdateScheduleFragment extends Fragment {
             Log.e(TAG, "Exception during request preparation", e);
             Toast.makeText(getContext(), "Ошибка при отправке запроса", Toast.LENGTH_LONG).show();
         }
+    }
+
+    private boolean validateInputs() {
+        if (intervalEditText.getText().toString().isEmpty() ||
+            articlesEditText.getText().toString().isEmpty() ||
+            startDateEditText.getText().toString().isEmpty() ||
+            endDateEditText.getText().toString().isEmpty()) {
+            Toast.makeText(getContext(), "Пожалуйста, заполните все поля.", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        int intervalHours = Integer.parseInt(intervalEditText.getText().toString());
+        int maxArticles = Integer.parseInt(articlesEditText.getText().toString());
+
+        if (intervalHours < 0 || maxArticles < 0) {
+            Toast.makeText(getContext(), "Значения не могут быть меньше 0.", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (startDate.after(endDate)) {
+            Toast.makeText(getContext(), "Начальная дата не может быть позже конечной.", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        return true;
     }
 
     @Override

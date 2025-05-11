@@ -6,13 +6,15 @@ public class NewsItem {
     private String source;
     private String link;
     private String summarizedText;
+    private int topicId;
 
-    public NewsItem(String title, String publicationDate, String source, String link, String summarizedText) {
+    public NewsItem(String title, String publicationDate, String source, String link, String summarizedText, int topicId) {
         this.title = title;
         this.publicationDate = publicationDate;
         this.source = source;
         this.link = link;
         this.summarizedText = summarizedText;
+        this.topicId = topicId;
     }
 
     public String getTitle() {
@@ -33,5 +35,9 @@ public class NewsItem {
 
     public String getSummarizedText() {
         return summarizedText;
+    }
+
+    public int getTopicId() {
+        return topicId;
     }
 }

@@ -132,16 +132,50 @@ public class    NewsListFragment extends Fragment {
             JSONArray jsonArray = new JSONArray(response);
             newsItems = new ArrayList<>();
 
+            Log.d(TAG, "Parsing response with " + jsonArray.length() + " items");
+
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject item = jsonArray.getJSONObject(i);
                 NewsItem newsItem = new NewsItem(
-                        item.getString("title"),
-                        item.getString("publication_date"),
-                        item.getString("source"),
-                        item.getString("link"),
-                        item.optString("summarized_text", "")
+                    item.getString("title"),
+                    item.getString("publication_date"),
+                    item.getString("source"),
+                    item.getString("link"),
+                    item.optString("summarized_text", ""),
+                    item.getInt("topic_id")
                 );
                 newsItems.add(newsItem);
+                Log.d(TAG, "Added news item: " + newsItem.getTitle() + " with topic_id: " + newsItem.getTopicId());
+            }
+
+            if (newsItems.isEmpty()) {
+                Toast.makeText(getContext(), "Новости за выбранный период не найдены", Toast.LENGTH_LONG).show();
+                requireActivity().getSupportFragmentManager().popBackStack();
+                return;
+            }
+
+            // Получаем выбранный topic_id из аргументов
+            Bundle args = getArguments();
+            if (args != null && args.containsKey("theme_id")) {
+                int selectedTopicId = Integer.parseInt(args.getString("theme_id"));
+                Log.d(TAG, "Filtering news for topic_id: " + selectedTopicId);
+                
+                // Фильтруем новости по выбранной теме
+                List<NewsItem> filteredNews = new ArrayList<>();
+                for (NewsItem newsItem : newsItems) {
+                    if (newsItem.getTopicId() == selectedTopicId) {
+                        filteredNews.add(newsItem);
+                        Log.d(TAG, "Added filtered news item: " + newsItem.getTitle());
+                    }
+                }
+                
+                if (filteredNews.isEmpty()) {
+                    Toast.makeText(getContext(), "Новости по выбранной теме не найдены", Toast.LENGTH_LONG).show();
+                    requireActivity().getSupportFragmentManager().popBackStack();
+                    return;
+                }
+                
+                newsItems = filteredNews;
             }
 
             adapter = new NewsAdapter(newsItems, this::navigateToResultFragment);
@@ -150,6 +184,7 @@ public class    NewsListFragment extends Fragment {
         } catch (Exception e) {
             Log.e(TAG, "Error parsing response: " + e.getMessage(), e);
             Toast.makeText(getContext(), "Ошибка обработки ответа: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            requireActivity().getSupportFragmentManager().popBackStack();
         }
     }
 
@@ -300,15 +335,17 @@ public class    NewsListFragment extends Fragment {
         Bundle args = getArguments();
         if (args == null) return;
         
-        int themeId = args.getInt("theme_id");
-        int newsCount = args.getInt("news_count");
-        
-        String url = "http://2.59.40.125:8000/api/fill_news/news/";
+        String url = "http://2.59.40.125:8000/api/fill_news/news/by-date/";
         
         JSONObject requestBody = new JSONObject();
         try {
-            requestBody.put("topic_id", themeId);
-            requestBody.put("limit", newsCount);
+            requestBody.put("start_date", args.getString("start_date"));
+            requestBody.put("end_date", args.getString("end_date"));
+            
+            // Логируем параметры запроса
+            Log.d(TAG, "Request body: " + requestBody.toString());
+            Log.d(TAG, "Theme ID from args: " + args.getString("theme_id"));
+            
         } catch (Exception e) {
             Log.e(TAG, "Error creating request body: " + e.getMessage(), e);
             return;
@@ -319,16 +356,57 @@ public class    NewsListFragment extends Fragment {
                     try {
                         // Преобразование ответа в правильную кодировку
                         String decodedResponse = new String(response.getBytes("ISO-8859-1"), "UTF-8");
-                        Log.d(TAG, "Updated news response: " + decodedResponse);
+                        Log.d(TAG, "Raw response: " + decodedResponse);
+                        
+                        // Фильтруем новости по теме
+                        JSONArray allNews = new JSONArray(decodedResponse);
+                        JSONArray filteredNews = new JSONArray();
+                        int themeId = Integer.parseInt(args.getString("theme_id"));
+                        
+                        Log.d(TAG, "Total news count: " + allNews.length());
+                        Log.d(TAG, "Filtering for theme ID: " + themeId);
+                        
+                        for (int i = 0; i < allNews.length(); i++) {
+                            JSONObject newsItem = allNews.getJSONObject(i);
+                            int itemTopicId = newsItem.getInt("topic_id");
+                            Log.d(TAG, "News item " + i + " topic_id: " + itemTopicId);
+                            
+                            if (itemTopicId == themeId) {
+                                Log.d(TAG, "Adding news item " + i + " to filtered list");
+                                filteredNews.put(newsItem);
+                            }
+                        }
+                        
+                        Log.d(TAG, "Filtered news count: " + filteredNews.length());
+                        
+                        if (filteredNews.length() == 0) {
+                            Toast.makeText(getContext(), "Новости по выбранной теме не найдены", Toast.LENGTH_LONG).show();
+                            requireActivity().getSupportFragmentManager().popBackStack();
+                            return;
+                        }
                         
                         // Обновляем список новостей
-                        parseResponse(decodedResponse);
+                        parseResponse(filteredNews.toString());
                         
                     } catch (Exception e) {
                         Log.e(TAG, "Error processing updated news response: " + e.getMessage(), e);
+                        Toast.makeText(getContext(), "Ошибка обработки ответа: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     }
                 },
-                error -> Log.e(TAG, "Error making update request: " + error.getMessage(), error)
+                error -> {
+                    Log.e(TAG, "Error making update request: " + error.getMessage(), error);
+                    String errorMessage;
+                    if (error.networkResponse != null) {
+                        if (error.networkResponse.statusCode == 404) {
+                            errorMessage = "Новости за выбранный период не найдены";
+                        } else {
+                            errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
+                        }
+                    } else {
+                        errorMessage = "Ошибка сети. Проверьте подключение к интернету";
+                    }
+                    Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+                }
         ) {
             @Override
             public String getBodyContentType() {
@@ -348,7 +426,7 @@ public class    NewsListFragment extends Fragment {
 
         request.setRetryPolicy(new com.android.volley.DefaultRetryPolicy(
                 30000,
-                com.android.volley.DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                3,
                 com.android.volley.DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
         ));
 
@@ -388,111 +466,20 @@ public class    NewsListFragment extends Fragment {
                     .addToBackStack("ResultFragment")
                     .commit();
         } else {
-            // Если текста нет, обновляем данные и затем переходим
-            showProgressDialog();
-            
-            Bundle args = getArguments();
-            if (args == null) return;
-            
-            int themeId = args.getInt("theme_id");
-            int newsCount = args.getInt("news_count");
-            
-            String url = "http://2.59.40.125:8000/api/fill_news/news/";
-            
-            JSONObject requestBody = new JSONObject();
-            try {
-                requestBody.put("topic_id", themeId);
-                requestBody.put("limit", newsCount);
-            } catch (Exception e) {
-                Log.e(TAG, "Error creating request body: " + e.getMessage(), e);
-                hideProgressDialog();
-                return;
-            }
-            
-            StringRequest request = new StringRequest(Request.Method.POST, url,
-                    response -> {
-                        try {
-                            String decodedResponse = new String(response.getBytes("ISO-8859-1"), "UTF-8");
-                            Log.d(TAG, "Updated news response: " + decodedResponse);
-                            
-                            parseResponse(decodedResponse);
-                            
-                            // Находим обновленную новость
-                            NewsItem updatedNewsItem = null;
-                            for (NewsItem item : newsItems) {
-                                if (item.getTitle().equals(newsItem.getTitle())) {
-                                    updatedNewsItem = item;
-                                    break;
-                                }
-                            }
-                            
-                            hideProgressDialog();
-                            
-                            if (updatedNewsItem != null) {
-                                ResultFragment resultFragment = new ResultFragment();
-                                Bundle resultArgs = new Bundle();
-                                
-                                resultArgs.putString("post_theme", updatedNewsItem.getTitle());
-                                resultArgs.putString("publication_date", updatedNewsItem.getPublicationDate());
-                                resultArgs.putString("source", updatedNewsItem.getSource());
-                                resultArgs.putString("link", updatedNewsItem.getLink());
-                                resultArgs.putString("summarized_text", updatedNewsItem.getSummarizedText());
-                                
-                                // Добавляем параметры генерации из аргументов
-                                resultArgs.putString("tone", args.getString("tone"));
-                                resultArgs.putString("length", args.getString("length"));
-                                resultArgs.putString("details", args.getString("details"));
-                                resultArgs.putStringArray("social_networks", args.getStringArray("social_networks"));
-                                
-                                resultFragment.setArguments(resultArgs);
-                                
-                                requireActivity().getSupportFragmentManager()
-                                        .beginTransaction()
-                                        .replace(R.id.fragment_container, resultFragment)
-                                        .addToBackStack("ResultFragment")
-                                        .commit();
-                            }
-                            
-                        } catch (Exception e) {
-                            hideProgressDialog();
-                            Log.e(TAG, "Error processing updated news response: " + e.getMessage(), e);
-                        }
-                    },
-                    error -> {
-                        hideProgressDialog();
-                        Log.e(TAG, "Error making update request: " + error.getMessage(), error);
-                    }
-            ) {
-                @Override
-                public String getBodyContentType() {
-                    return "application/json; charset=utf-8";
-                }
-
-                @Override
-                public byte[] getBody() {
-                    try {
-                        return requestBody.toString().getBytes("utf-8");
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error creating request body: " + e.getMessage(), e);
-                        return null;
-                    }
-                }
-            };
-
-            request.setRetryPolicy(new com.android.volley.DefaultRetryPolicy(
-                    30000,
-                    com.android.volley.DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                    com.android.volley.DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-            ));
-
-            requestQueue.add(request);
+            // Если текста нет, показываем сообщение
+            Toast.makeText(getContext(), "Текст для этой новости еще не сгенерирован", Toast.LENGTH_LONG).show();
         }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        hideProgressDialog();
+        if (requestQueue != null) {
+            requestQueue.cancelAll(this);
+        }
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.dismiss();
+        }
     }
 
 }

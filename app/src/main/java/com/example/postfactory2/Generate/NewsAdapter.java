@@ -49,9 +49,11 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
         private TextView tvPublicationDate;
         private TextView tvSource;
         private TextView tvLink;
+        private View itemView;
 
         public NewsViewHolder(@NonNull View itemView) {
             super(itemView);
+            this.itemView = itemView;
             tvTitle = itemView.findViewById(R.id.tvTitle);
             tvPublicationDate = itemView.findViewById(R.id.tvPublicationDate);
             tvSource = itemView.findViewById(R.id.tvSource);
@@ -63,6 +65,15 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
             tvPublicationDate.setText(newsItem.getPublicationDate());
             tvSource.setText(newsItem.getSource());
             tvLink.setText(newsItem.getLink());
+
+            // Устанавливаем цвет текста в зависимости от наличия суммаризированного текста
+            int textColor = newsItem.getSummarizedText() != null && 
+                           !newsItem.getSummarizedText().isEmpty() && 
+                           !newsItem.getSummarizedText().equals("Сгенерированный текст") 
+                           ? itemView.getContext().getResources().getColor(R.color.primary)
+                           : itemView.getContext().getResources().getColor(R.color.gray);
+            
+            tvTitle.setTextColor(textColor);
 
             // Верхняя часть карточки: заголовок, дата и источник
             itemView.setOnClickListener(v -> onNewsClickListener.onNewsClick(newsItem));

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5"
+    android:background="@color/white"
     android:padding="16dp">
 
     <LinearLayout
@@ -12,146 +13,382 @@
 
         <!-- Заголовок -->
         <TextView
-            android:id="@+id/tvGenerateTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Настройка генерации поста"
-            android:textSize="20sp"
+            android:text="Генерация постов"
+            android:textSize="24sp"
             android:textStyle="bold"
-            android:textColor="#000000"
-            android:layout_marginBottom="16dp" />
+            android:textColor="@color/black"
+            android:layout_marginBottom="24dp"/>
 
-
-
-        <!-- Выбор тематики -->
-        <TextView
+        <!-- Карточка с выбором периода -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Выберите тематику:"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp"
-            android:textColor="#131313" />
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/white">
 
-        <Spinner
-            android:id="@+id/spinerTheme"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Поле для ввода количества постов -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Количество постов:"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp"
-            android:textColor="#131313" />
-
-        <EditText
-            android:id="@+id/etNewsCount"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Количество новостей"
-            android:inputType="number"
-            android:layout_marginTop="16dp"/>
-
-
-        <!-- Уточнения -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Ключевые слова или пожелания:"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp"
-            android:textColor="#131313" />
-
-        <EditText
-            android:id="@+id/etDetails"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Дополнительные детали"
-            android:layout_marginTop="16dp"/>
-
-        <!-- Выбор тональности -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Выберите тональность:"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp"
-            android:textColor="#131313" />
-
-        <Spinner
-            android:id="@+id/spinnerTone"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Длина поста -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Длина поста:"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp"
-            android:textColor="#131313" />
-
-        <RadioGroup
-            android:id="@+id/rgPostLength"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
-
-            <RadioButton
-                android:id="@+id/rbShort"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Короткий" />
+                android:orientation="vertical"
+                android:padding="16dp">
 
-            <RadioButton
-                android:id="@+id/rbMedium"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Средний" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Период новостей"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:layout_marginBottom="8dp"/>
 
-            <RadioButton
-                android:id="@+id/rbLong"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Длинный" />
-        </RadioGroup>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Выберите период, за который нужно собрать новости"
+                    android:textColor="@color/gray"
+                    android:layout_marginBottom="12dp"/>
 
-        <!-- Выбор соцсетей -->
-        <TextView
+                <RadioGroup
+                    android:id="@+id/periodRadioGroup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp">
+
+                    <RadioButton
+                        android:id="@+id/todayRadio"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Сегодня"
+                        android:textColor="@color/black"
+                        android:checked="true"/>
+
+                    <RadioButton
+                        android:id="@+id/weekRadio"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="За неделю"
+                        android:textColor="@color/black"/>
+
+                    <RadioButton
+                        android:id="@+id/monthRadio"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="За месяц"
+                        android:textColor="@color/black"/>
+
+                    <RadioButton
+                        android:id="@+id/customRadio"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Свой период"
+                        android:textColor="@color/black"/>
+                </RadioGroup>
+
+                <LinearLayout
+                    android:id="@+id/customDateLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Начальная дата"
+                        app:boxStrokeColor="@color/primary"
+                        app:hintTextColor="@color/gray"
+                        android:textColorHint="@color/gray"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_marginBottom="8dp">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/startDateEditText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            android:focusable="false"
+                            android:clickable="true"
+                            android:textColor="@color/black"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Конечная дата"
+                        app:boxStrokeColor="@color/primary"
+                        app:hintTextColor="@color/gray"
+                        android:textColorHint="@color/gray"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/endDateEditText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            android:focusable="false"
+                            android:clickable="true"
+                            android:textColor="@color/black"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/checkStatisticsButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Проверить статистику"
+                    android:textSize="14sp"
+                    android:padding="8dp"
+                    android:layout_marginTop="8dp"
+                    app:cornerRadius="8dp"
+                    android:backgroundTint="@color/primary"
+                    android:textColor="@color/white"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Карточка с выбором темы -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Выберите социальные сети:"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp"
-            android:textColor="#131313" />
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/white">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvSocialNetworks"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Тема"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:layout_marginBottom="8dp"/>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    app:boxStrokeColor="@color/primary"
+                    app:hintTextColor="@color/gray"
+                    android:textColorHint="@color/gray"
+                    app:boxBackgroundColor="@color/white"
+                    android:hint="Выберите тему">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/spinerTheme"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none"
+                        android:textColor="@color/black"
+                        android:background="@color/white"
+                        android:popupBackground="@color/white"
+                        android:dropDownVerticalOffset="4dp"/>
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Карточка с настройками тона -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/white">
 
-        <!-- Кнопка "Сгенерировать" -->
-        <Button
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Тон"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:layout_marginBottom="8dp"/>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    app:boxStrokeColor="@color/primary"
+                    app:hintTextColor="@color/gray"
+                    android:textColorHint="@color/gray"
+                    app:boxBackgroundColor="@color/white"
+                    android:hint="Выберите тон">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/spinnerTone"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none"
+                        android:textColor="@color/black"
+                        android:background="@color/white"
+                        android:popupBackground="@color/white"
+                        android:dropDownVerticalOffset="4dp"/>
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Карточка с настройками длины поста -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Длина поста"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:layout_marginBottom="8dp"/>
+
+                <RadioGroup
+                    android:id="@+id/rgPostLength"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <RadioButton
+                        android:id="@+id/rbShort"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Короткий"
+                        android:textColor="@color/black"/>
+
+                    <RadioButton
+                        android:id="@+id/rbMedium"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Средний"
+                        android:textColor="@color/black"
+                        android:checked="true"/>
+
+                    <RadioButton
+                        android:id="@+id/rbLong"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Длинный"
+                        android:textColor="@color/black"/>
+                </RadioGroup>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Карточка с дополнительными деталями -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Дополнительные детали"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:layout_marginBottom="8dp"/>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Введите дополнительные детали"
+                    app:boxStrokeColor="@color/primary"
+                    app:hintTextColor="@color/gray"
+                    android:textColorHint="@color/gray"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etDetails"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textMultiLine"
+                        android:minLines="2"
+                        android:gravity="top"
+                        android:textColor="@color/black"/>
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Карточка с выбором соцсетей -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Социальные сети"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:layout_marginBottom="8dp"/>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvSocialNetworks"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Кнопка генерации -->
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnGenerate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Сгенерировать"
-            android:backgroundTint="#4CAF50"
-            android:textColor="#FFFFFF"
-            android:layout_marginTop="24dp"
-            android:textStyle="bold" />
+            android:textSize="16sp"
+            android:padding="12dp"
+            android:layout_marginTop="8dp"
+            app:cornerRadius="8dp"
+            android:backgroundTint="@color/primary"
+            android:textColor="@color/white"/>
+
     </LinearLayout>
 </ScrollView>
