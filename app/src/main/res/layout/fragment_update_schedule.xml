@@ -22,78 +22,6 @@
             android:textColor="@color/text_primary_light"
             android:layout_marginBottom="24dp"/>
 
-        <!-- Карточка с настройками дат -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            app:cardBackgroundColor="@color/card_background_light">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Период парсинга"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary_light"
-                    android:layout_marginBottom="8dp"/>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Укажите период времени, за который нужно собрать новости."
-                    android:textColor="@color/text_secondary_light"
-                    android:layout_marginBottom="12dp"/>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Начальная дата"
-                    app:boxStrokeColor="@color/accent_color"
-                    app:hintTextColor="@color/text_secondary_light"
-                    android:textColorHint="@color/text_secondary_light"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_marginBottom="8dp">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/startDateEditText"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="none"
-                        android:focusable="false"
-                        android:clickable="true"
-                        android:textColor="@color/text_primary_light"/>
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Конечная дата"
-                    app:boxStrokeColor="@color/accent_color"
-                    app:hintTextColor="@color/text_secondary_light"
-                    android:textColorHint="@color/text_secondary_light"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/endDateEditText"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="none"
-                        android:focusable="false"
-                        android:clickable="true"
-                        android:textColor="@color/text_primary_light"/>
-                </com.google.android.material.textfield.TextInputLayout>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
         <!-- Карточка с настройками интервала -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
@@ -144,7 +72,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Карточка с настройками количества постов -->
+        <!-- Карточка с настройками периода -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -162,7 +90,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Максимальное количество постов"
+                    android:text="Период парсинга"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_primary_light"
@@ -171,21 +99,89 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Укажите, сколько новостей нужно собирать за один раз. Рекомендуется не более 20 постов."
+                    android:text="Укажите количество дней для парсинга и проверки предыдущих дней."
                     android:textColor="@color/text_secondary_light"
                     android:layout_marginBottom="12dp"/>
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Введите количество постов"
+                    android:hint="Количество дней для парсинга"
+                    app:boxStrokeColor="@color/accent_color"
+                    app:hintTextColor="@color/text_secondary_light"
+                    android:textColorHint="@color/text_secondary_light"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_marginBottom="8dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/periodDaysEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        android:textColor="@color/text_primary_light"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Количество дней для проверки"
                     app:boxStrokeColor="@color/accent_color"
                     app:hintTextColor="@color/text_secondary_light"
                     android:textColorHint="@color/text_secondary_light"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
                     <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/articlesEditText"
+                        android:id="@+id/checkPreviousDaysEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        android:textColor="@color/text_primary_light"/>
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Карточка с настройками разового парсинга -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/card_background_light">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Настройки разового парсинга"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary_light"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Укажите максимальное количество статей для разового парсинга."
+                    android:textColor="@color/text_secondary_light"
+                    android:layout_marginBottom="12dp"/>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Максимальное количество статей"
+                    app:boxStrokeColor="@color/accent_color"
+                    app:hintTextColor="@color/text_secondary_light"
+                    android:textColorHint="@color/text_secondary_light"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/maxArticlesEditText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="number"
@@ -232,8 +228,21 @@
                 android:text="Удалить расписание"
                 android:textSize="16sp"
                 android:padding="12dp"
+                android:layout_marginBottom="8dp"
                 app:cornerRadius="8dp"
                 android:backgroundTint="@color/button_delete"
+                android:textColor="@color/white"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/parseOnceButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Выполнить разовый парсинг"
+                android:textSize="16sp"
+                android:padding="12dp"
+                android:layout_marginBottom="8dp"
+                app:cornerRadius="8dp"
+                android:backgroundTint="@color/button_update"
                 android:textColor="@color/white"/>
 
             <com.google.android.material.button.MaterialButton
