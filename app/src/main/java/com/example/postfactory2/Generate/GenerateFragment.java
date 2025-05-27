@@ -219,6 +219,180 @@ public class GenerateFragment extends Fragment {
         }
     }
 
+    private void checkNewsAvailability(Runnable onSuccess) {
+        // Форматируем даты в нужный формат (ДД.ММ.ГГГГ)
+        SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        SimpleDateFormat outputFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
+        
+        String startDate;
+        String endDate;
+        try {
+            startDate = outputFormat.format(inputFormat.parse(startDateEditText.getText().toString()));
+            endDate = outputFormat.format(inputFormat.parse(endDateEditText.getText().toString()));
+            Log.d(TAG, "Formatted dates - Start: " + startDate + ", End: " + endDate);
+        } catch (Exception e) {
+            progressDialog.dismiss();
+            Log.e(TAG, "Error formatting dates: " + e.getMessage(), e);
+            Toast.makeText(getContext(), "Ошибка форматирования дат", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        String url = String.format("http://2.59.40.125:8000/api/parse/parse_once/?start_date=%s&end_date=%s",
+                startDate, endDate);
+        Log.d(TAG, "Request URL: " + url);
+        
+        progressDialog.setMessage("Проверка наличия новостей...\nЭто может занять несколько минут");
+        progressDialog.show();
+
+        StringRequest request = new StringRequest(
+            Request.Method.POST,
+            url,
+            response -> {
+                try {
+                    // Декодируем ответ в UTF-8
+                    String decodedResponse = new String(response.getBytes("ISO-8859-1"), "UTF-8");
+                    Log.d(TAG, "Response received: " + decodedResponse);
+                    
+                    JSONObject jsonResponse = new JSONObject(decodedResponse);
+                    if (jsonResponse.has("articles_count")) {
+                        int articlesCount = jsonResponse.getInt("articles_count");
+                        String message = jsonResponse.getString("message");
+                        Log.i(TAG, "Articles found: " + articlesCount + ", Message: " + message);
+                        
+                        // Показываем сообщение только если найдены новости
+                        progressDialog.dismiss();
+                        if (articlesCount > 0) {
+                            Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
+                        }
+                        onSuccess.run();
+                    } else {
+                        progressDialog.dismiss();
+                        Log.w(TAG, "Unexpected response format: " + decodedResponse);
+                        Toast.makeText(getContext(), 
+                            "Неожиданный формат ответа от сервера", 
+                            Toast.LENGTH_LONG).show();
+                    }
+                } catch (Exception e) {
+                    progressDialog.dismiss();
+                    Log.e(TAG, "Error parsing response: " + e.getMessage(), e);
+                    Toast.makeText(getContext(), "Ошибка при обработке ответа: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            },
+            error -> {
+                progressDialog.dismiss();
+                String errorMessage;
+                if (error.networkResponse != null) {
+                    try {
+                        String responseBody = new String(error.networkResponse.data, "utf-8");
+                        Log.e(TAG, "Error response body: " + responseBody);
+                        Log.e(TAG, "Error status code: " + error.networkResponse.statusCode);
+                        JSONObject errorJson = new JSONObject(responseBody);
+                        if (errorJson.has("detail")) {
+                            errorMessage = errorJson.getString("detail");
+                            Log.e(TAG, "Error detail: " + errorMessage);
+                        } else {
+                            errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error parsing error response: " + e.getMessage(), e);
+                        errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
+                    }
+                } else {
+                    Log.e(TAG, "Network error: " + error.getMessage(), error);
+                    errorMessage = "Ошибка сети. Проверьте подключение к интернету";
+                }
+                Log.e(TAG, "Error checking news availability: " + errorMessage, error);
+                Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+            }
+        ) {
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String> headers = new HashMap<>();
+                headers.put("accept", "application/json; charset=utf-8");
+                Log.d(TAG, "Request headers: " + headers);
+                return headers;
+            }
+        };
+
+        request.setRetryPolicy(new DefaultRetryPolicy(
+            300000, // 5 минут таймаут
+            3,      // 3 попытки
+            DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+        ));
+
+        Log.d(TAG, "Sending request...");
+        requestQueue.add(request);
+    }
+
+    private void classifyArticles(Runnable onSuccess) {
+        String url = "http://192.168.0.103:8000/classify/classify/all";
+        Log.d(TAG, "Classification URL: " + url);
+        progressDialog.setMessage("Классификация новостей...");
+        progressDialog.show();
+
+        StringRequest request = new StringRequest(
+            Request.Method.POST,
+            url,
+            response -> {
+                try {
+                    // Декодируем ответ в UTF-8
+                    String decodedResponse = new String(response.getBytes("ISO-8859-1"), "UTF-8");
+                    Log.d(TAG, "Classification response: " + decodedResponse);
+                    progressDialog.dismiss();
+                    onSuccess.run();
+                } catch (Exception e) {
+                    progressDialog.dismiss();
+                    Log.e(TAG, "Error decoding classification response: " + e.getMessage(), e);
+                    Toast.makeText(getContext(), "Ошибка при обработке ответа классификации", Toast.LENGTH_LONG).show();
+                }
+            },
+            error -> {
+                progressDialog.dismiss();
+                String errorMessage;
+                if (error.networkResponse != null) {
+                    try {
+                        String responseBody = new String(error.networkResponse.data, "utf-8");
+                        Log.e(TAG, "Classification error response: " + responseBody);
+                        Log.e(TAG, "Classification error URL: " + url);
+                        Log.e(TAG, "Classification error status code: " + error.networkResponse.statusCode);
+                        JSONObject errorJson = new JSONObject(responseBody);
+                        if (errorJson.has("detail")) {
+                            errorMessage = errorJson.getString("detail");
+                            Log.e(TAG, "Classification error detail: " + errorMessage);
+                        } else {
+                            errorMessage = "Ошибка классификации: " + error.networkResponse.statusCode;
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error parsing classification error response: " + e.getMessage(), e);
+                        errorMessage = "Ошибка классификации: " + error.networkResponse.statusCode;
+                    }
+                } else {
+                    Log.e(TAG, "Network error during classification: " + error.getMessage(), error);
+                    errorMessage = "Ошибка сети при классификации";
+                }
+                Log.e(TAG, "Classification error: " + errorMessage, error);
+                Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+            }
+        ) {
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String> headers = new HashMap<>();
+                headers.put("accept", "application/json; charset=utf-8");
+                Log.d(TAG, "Classification request headers: " + headers);
+                return headers;
+            }
+        };
+
+        request.setRetryPolicy(new DefaultRetryPolicy(
+            30000,
+            3,
+            DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+        ));
+
+        Log.d(TAG, "Sending classification request...");
+        requestQueue.add(request);
+    }
+
     private void checkStatistics() {
         // Проверяем только даты
         if (periodRadioGroup.getCheckedRadioButtonId() == R.id.customRadio) {
@@ -234,53 +408,71 @@ public class GenerateFragment extends Fragment {
             }
         }
 
-        String url = "http://2.59.40.125:8000/api/fill_news/news/statistics/";
-        progressDialog.setMessage("Получение статистики...");
-        progressDialog.show();
+        // Сначала проверяем наличие новостей через разовый парсинг
+        checkNewsAvailability(() -> {
+            // После успешного парсинга выполняем классификацию
+            classifyArticles(() -> {
+                // После классификации получаем статистику
+                String url = "http://2.59.40.125:8000/api/fill_news/news/statistics/";
+                progressDialog.setMessage("Получение статистики...");
+                progressDialog.show();
 
-        try {
-            JSONObject requestBody = new JSONObject();
-            requestBody.put("start_date", startDateEditText.getText().toString());
-            requestBody.put("end_date", endDateEditText.getText().toString());
+                try {
+                    JSONObject requestBody = new JSONObject();
+                    requestBody.put("start_date", startDateEditText.getText().toString());
+                    requestBody.put("end_date", endDateEditText.getText().toString());
 
-            JsonObjectRequest jsonRequest = new JsonObjectRequest(
-                Request.Method.POST,
-                url,
-                requestBody,
-                response -> {
-                    progressDialog.dismiss();
-                    showStatisticsDialog(response);
-                },
-                error -> {
-                    progressDialog.dismiss();
-                    String errorMessage;
-                    if (error.networkResponse != null) {
-                        if (error.networkResponse.statusCode == 404) {
-                            errorMessage = "Новости за выбранный период не найдены";
-                        } else {
-                            errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
+                    JsonObjectRequest jsonRequest = new JsonObjectRequest(
+                        Request.Method.POST,
+                        url,
+                        requestBody,
+                        response -> {
+                            progressDialog.dismiss();
+                            try {
+                                int totalArticles = response.getInt("total_articles");
+                                if (totalArticles == 0) {
+                                    Toast.makeText(getContext(), 
+                                        "Новости за выбранный период не найдены. Попробуйте выбрать другой период.", 
+                                        Toast.LENGTH_LONG).show();
+                                } else {
+                                    showStatisticsDialog(response);
+                                }
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error parsing statistics: " + e.getMessage(), e);
+                                Toast.makeText(getContext(), "Ошибка при обработке статистики", Toast.LENGTH_LONG).show();
+                            }
+                        },
+                        error -> {
+                            progressDialog.dismiss();
+                            String errorMessage;
+                            if (error.networkResponse != null) {
+                                if (error.networkResponse.statusCode == 404) {
+                                    errorMessage = "Новости за выбранный период не найдены";
+                                } else {
+                                    errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
+                                }
+                            } else {
+                                errorMessage = "Ошибка сети. Проверьте подключение к интернету";
+                            }
+                            Log.e(TAG, "Error getting statistics: " + errorMessage, error);
+                            Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
                         }
-                    } else {
-                        errorMessage = "Ошибка сети. Проверьте подключение к интернету";
-                    }
-                    Log.e(TAG, "Error getting statistics: " + errorMessage, error);
-                    Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+                    );
+
+                    jsonRequest.setRetryPolicy(new DefaultRetryPolicy(
+                        30000,
+                        3,
+                        DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+                    ));
+
+                    requestQueue.add(jsonRequest);
+                } catch (Exception e) {
+                    progressDialog.dismiss();
+                    Log.e(TAG, "Exception during request preparation", e);
+                    Toast.makeText(getContext(), "Ошибка при отправке запроса", Toast.LENGTH_LONG).show();
                 }
-            );
-
-            // Увеличиваем таймаут и количество попыток
-            jsonRequest.setRetryPolicy(new DefaultRetryPolicy(
-                30000, // 30 секунд таймаут
-                3,     // 3 попытки
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-            ));
-
-            requestQueue.add(jsonRequest);
-        } catch (Exception e) {
-            progressDialog.dismiss();
-            Log.e(TAG, "Exception during request preparation", e);
-            Toast.makeText(getContext(), "Ошибка при отправке запроса", Toast.LENGTH_LONG).show();
-        }
+            });
+        });
     }
 
     private void showStatisticsDialog(JSONObject statistics) {
@@ -334,63 +526,63 @@ public class GenerateFragment extends Fragment {
             requestBody.put("end_date", endDateEditText.getText().toString());
 
             StringRequest request = new StringRequest(Request.Method.POST, url,
-                response -> {
-                    try {
-                        String decodedResponse = new String(response.getBytes("ISO-8859-1"), "UTF-8");
-                        Log.i(TAG, "Response: " + decodedResponse);
-
-                        // Получаем выбранные параметры
-                        String tone = spinnerTone.getText().toString();
-                        String length = getSelectedLength();
-                        String details = etDetails.getText().toString();
-                        String[] socialNetworks = getSelectedSocialNetworks();
-
-                        // Передача данных в NewsListFragment
-                        Bundle args = new Bundle();
-                        args.putString("response", decodedResponse);
-                        args.putString("theme_id", String.valueOf(themeId));
-                        args.putString("tone", tone);
-                        args.putString("length", length);
-                        args.putString("details", details);
-                        args.putStringArray("social_networks", socialNetworks);
-
-                        NewsListFragment newsListFragment = new NewsListFragment();
-                        newsListFragment.setArguments(args);
-
-                        requireActivity().getSupportFragmentManager()
-                            .beginTransaction()
-                            .replace(R.id.fragment_container, newsListFragment)
-                            .addToBackStack(null)
-                            .commit();
-
-                        progressDialog.dismiss();
-                    } catch (Exception e) {
-                        progressDialog.dismiss();
-                        Log.e(TAG, "Error processing response: " + e.getMessage(), e);
-                        Toast.makeText(getContext(), "Ошибка обработки ответа: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                },
-                error -> {
-                    progressDialog.dismiss();
-                    String errorMessage;
-                    if (error.networkResponse != null) {
-                        if (error.networkResponse.statusCode == 404) {
-                            errorMessage = "Новости за выбранный период не найдены";
-                        } else {
-                            errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
-                        }
+                    response -> {
                         try {
-                            String responseBody = new String(error.networkResponse.data, "utf-8");
-                            Log.e(TAG, "Response body: " + responseBody);
+                            String decodedResponse = new String(response.getBytes("ISO-8859-1"), "UTF-8");
+                            Log.i(TAG, "Response: " + decodedResponse);
+
+                            // Получаем выбранные параметры
+                            String tone = spinnerTone.getText().toString();
+                            String length = getSelectedLength();
+                            String details = etDetails.getText().toString();
+                            String[] socialNetworks = getSelectedSocialNetworks();
+
+                            // Передача данных в NewsListFragment
+                            Bundle args = new Bundle();
+                            args.putString("response", decodedResponse);
+                            args.putString("theme_id", String.valueOf(themeId));
+                            args.putString("tone", tone);
+                            args.putString("length", length);
+                            args.putString("details", details);
+                            args.putStringArray("social_networks", socialNetworks);
+
+                            NewsListFragment newsListFragment = new NewsListFragment();
+                            newsListFragment.setArguments(args);
+
+                            requireActivity().getSupportFragmentManager()
+                                    .beginTransaction()
+                                    .replace(R.id.fragment_container, newsListFragment)
+                                    .addToBackStack(null)
+                                    .commit();
+
+                            progressDialog.dismiss();
                         } catch (Exception e) {
-                            Log.e(TAG, "Error reading error response: " + e.getMessage());
+                            progressDialog.dismiss();
+                            Log.e(TAG, "Error processing response: " + e.getMessage(), e);
+                            Toast.makeText(getContext(), "Ошибка обработки ответа: " + e.getMessage(), Toast.LENGTH_LONG).show();
                         }
-                    } else {
-                        errorMessage = "Ошибка сети. Проверьте подключение к интернету";
+                    },
+                    error -> {
+                        progressDialog.dismiss();
+                        String errorMessage;
+                        if (error.networkResponse != null) {
+                            if (error.networkResponse.statusCode == 404) {
+                                errorMessage = "Новости за выбранный период не найдены";
+                            } else {
+                                errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
+                            }
+                            try {
+                                String responseBody = new String(error.networkResponse.data, "utf-8");
+                                Log.e(TAG, "Response body: " + responseBody);
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error reading error response: " + e.getMessage());
+                            }
+                        } else {
+                            errorMessage = "Ошибка сети. Проверьте подключение к интернету";
+                        }
+                        Log.e(TAG, "Error during request: " + error.toString());
+                        Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
                     }
-                    Log.e(TAG, "Error during request: " + error.toString());
-                    Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
-                }
             ) {
                 @Override
                 public String getBodyContentType() {
@@ -409,9 +601,9 @@ public class GenerateFragment extends Fragment {
             };
 
             request.setRetryPolicy(new DefaultRetryPolicy(
-                30000,
-                3,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+                    30000,
+                    3,
+                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
             ));
 
             requestQueue.add(request);
