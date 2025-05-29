@@ -18,6 +18,7 @@
             android:text="POST.factory"
             android:textSize="24sp"
             android:textStyle="bold"
+            android:textColor="#000000"
             android:layout_marginTop="40dp" />
 
         <!-- Заголовок -->
@@ -27,6 +28,7 @@
             android:text="Авторизация"
             android:textSize="20sp"
             android:textStyle="bold"
+            android:textColor="#000000"
             android:gravity="center"
             android:layout_marginTop="24dp"
             android:layout_marginBottom="16dp" />
@@ -37,6 +39,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Адрес электронной почты"
+            android:textColor="#000000"
+            android:textColorHint="#666666"
             android:layout_marginBottom="12dp"
             android:background="@drawable/rounded_edit_text_background" />
 
@@ -46,22 +50,26 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Пароль"
+            android:textColor="#000000"
+            android:textColorHint="#666666"
             android:inputType="textPassword"
             android:layout_marginBottom="8dp"
             android:background="@drawable/rounded_edit_text_background" />
 
         <!-- Кнопка "Забыли пароль" -->
         <TextView
+            android:id="@+id/tv_forgot_password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Забыли пароль?"
             android:textSize="14sp"
-            android:textColor="#666666"
+            android:textColor="#000000"
             android:gravity="end"
             android:layout_marginBottom="24dp" />
 
         <!-- Кнопка входа -->
         <Button
+            android:layout_marginTop="40dp"
             android:id="@+id/btn_login"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -69,40 +77,5 @@
             android:backgroundTint="#000000"
             android:textColor="#FFFFFF"
             android:layout_marginBottom="16dp" />
-
-        <!-- Регистрация через соцсети -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Или с помощью"
-            android:textSize="14sp"
-            android:gravity="center"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Соцсети -->
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center">
-
-            <ImageView
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_margin="8dp"
-                android:src="@drawable/facebook" />
-
-            <ImageView
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_margin="8dp"
-                android:src="@drawable/google" />
-
-            <ImageView
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_margin="8dp"
-                android:src="@drawable/vk" />
-        </LinearLayout>
     </LinearLayout>
 </ScrollView>

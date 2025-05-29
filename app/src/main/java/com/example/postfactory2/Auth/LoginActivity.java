@@ -2,10 +2,12 @@ package com.example.postfactory2.Auth;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -92,6 +94,7 @@ public class LoginActivity extends AppCompatActivity {
         EditText etUsername = findViewById(R.id.et_email);
         EditText etPassword = findViewById(R.id.et_password);
         Button btnLogin = findViewById(R.id.btn_login);
+        TextView tvForgotPassword = findViewById(R.id.tv_forgot_password);
 
         btnLogin.setOnClickListener(v -> {
             String username = etUsername.getText().toString().trim();
@@ -103,6 +106,37 @@ public class LoginActivity extends AppCompatActivity {
                 login(username, password);
             }
         });
+
+        tvForgotPassword.setOnClickListener(v -> {
+            showForgotPasswordDialog();
+        });
+    }
+
+    private void showForgotPasswordDialog() {
+        android.app.Dialog dialog = new android.app.Dialog(this);
+        dialog.setContentView(R.layout.dialog_forgot_password);
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+
+        // Настройка ширины диалога
+        int width = (int) (getResources().getDisplayMetrics().widthPixels * 0.9);
+        dialog.getWindow().setLayout(width, android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+
+        // Обработка нажатия на email
+        TextView tvItEmail = dialog.findViewById(R.id.tv_it_email);
+        tvItEmail.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_SENDTO);
+            intent.setData(Uri.parse("mailto:it@postfactory.ru"));
+            intent.putExtra(Intent.EXTRA_SUBJECT, "Восстановление пароля в POST.factory");
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivity(intent);
+            }
+        });
+
+        // Обработка нажатия на кнопку закрытия
+        Button btnClose = dialog.findViewById(R.id.btn_close);
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
     }
 
     private void login(String username, String password) {
