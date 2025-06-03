@@ -238,7 +238,22 @@ public class    NewsListFragment extends Fragment {
     }
 
     private void startSummarization(List<NewsItem> articles, List<Integer> positions) {
-        String url = "http://192.168.0.103:8000/summarize/check-summaries";
+        String url;
+        String regionCode = getArguments() != null ? getArguments().getString("region_code", "ekb") : "ekb";
+        String themeId = getArguments() != null ? getArguments().getString("theme_id") : null;
+
+        if (regionCode.equals("ekb")) {
+            url = "http://192.168.0.103:8000/summarize/check-summaries";
+        } else {
+            // Получаем ID региона из кода
+            String regionId = getRegionId(regionCode);
+            if (regionId == null) {
+                Toast.makeText(requireContext(), "Ошибка: регион не найден", Toast.LENGTH_LONG).show();
+                return;
+            }
+            url = String.format("http://192.168.0.103:8000/api/v1/regions/%s/summarize/?topic_id=%s", 
+                regionId, themeId);
+        }
         Log.d(TAG, "Starting summarization with URL: " + url);
         
         try {
@@ -258,7 +273,8 @@ public class    NewsListFragment extends Fragment {
                             Log.d(TAG, "Ответ от сервера суммаризации: " + decodedResponse);
                             
                             // Проверяем статус ответа
-                            if (decodedResponse.contains("Суммаризация завершена")) {
+                            if (decodedResponse.contains("Суммаризация завершена") || 
+                                decodedResponse.contains("Суммаризация для региона")) {
                                 // Запускаем проверку обновленных данных
                                 startUpdateCheck();
                             } else {
@@ -309,6 +325,15 @@ public class    NewsListFragment extends Fragment {
             hideProgressDialog();
             Toast.makeText(requireContext(), "Ошибка подготовки запроса", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private String getRegionId(String regionCode) {
+        // Получаем ID региона из аргументов фрагмента
+        Bundle args = getArguments();
+        if (args != null && args.containsKey("region_id")) {
+            return args.getString("region_id");
+        }
+        return null;
     }
 
     private void startUpdateCheck() {

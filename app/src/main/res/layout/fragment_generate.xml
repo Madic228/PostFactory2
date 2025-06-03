@@ -149,6 +149,85 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <!-- Карточка с выбором региона -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Регион"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Выберите регион для сбора новостей"
+                    android:textColor="@color/gray"
+                    android:layout_marginBottom="12dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        app:boxStrokeColor="@color/primary"
+                        app:hintTextColor="@color/gray"
+                        android:textColorHint="@color/gray"
+                        app:boxBackgroundColor="@color/white"
+                        android:hint="Выберите регион">
+
+                        <AutoCompleteTextView
+                            android:id="@+id/regionSpinner"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            android:textColor="@color/black"
+                            android:background="@color/white"
+                            android:popupBackground="@color/white"
+                            android:dropDownVerticalOffset="4dp"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAddRegion"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="+"
+                        android:textSize="20sp"
+                        android:padding="8dp"
+                        app:cornerRadius="8dp"
+                        android:backgroundTint="@color/primary"
+                        android:textColor="@color/white"
+                        app:icon="@android:drawable/ic_menu_edit"
+                        app:iconGravity="textStart"
+                        app:iconPadding="0dp"
+                        android:minWidth="48dp"
+                        android:minHeight="48dp"/>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
         <!-- Карточка с выбором темы -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"

@@ -40,5 +40,8 @@
     <color name="success">#4CAF50</color>
     <color name="warning">#FFC107</color>
 
+    <color name="primary_light">#1A2196F3</color>
+    <color name="gray_light">#1A757575</color>
+
 </resources>
 
