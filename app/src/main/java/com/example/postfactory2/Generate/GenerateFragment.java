@@ -419,7 +419,7 @@ public class GenerateFragment extends Fragment {
                 Toast.makeText(getContext(), "Ошибка при создании запроса: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         } else {
-            // Для других регионов сначала проверяем статистику
+            // Для других регионов проверяем статистику
             getRegionId(selectedRegionCode, regionId -> {
                 if (regionId == null) {
                     Log.e(TAG, "Failed to get region ID for code: " + selectedRegionCode);
@@ -447,18 +447,10 @@ public class GenerateFragment extends Fragment {
                             Log.d(TAG, "Total articles found: " + totalArticles);
 
                             if (totalArticles == 0) {
-                                Log.w(TAG, "No articles found in statistics, starting parsing");
-                                // Если новостей нет, запускаем парсинг
-                                performRegionParse(regionId, startDate, endDate, () -> {
-                                    // После парсинга запускаем суммаризацию
-                                    startRegionSummarization(regionId, () -> {
-                                        // После суммаризации запускаем классификацию
-                                        classifyArticles(() -> {
-                                            // После классификации получаем статистику снова
-                                            checkStatistics();
-                                        });
-                                    });
-                                });
+                                Log.w(TAG, "No articles found in statistics");
+                                Toast.makeText(getContext(), 
+                                    "Нет новостей за выбранный период. Парсинг запущен автоматически через планировщик.",
+                                    Toast.LENGTH_LONG).show();
                             } else {
                                 Log.i(TAG, "Found " + totalArticles + " articles in statistics");
                                 showStatisticsDialog(response);
@@ -473,18 +465,9 @@ public class GenerateFragment extends Fragment {
                     error -> {
                         progressDialog.dismiss();
                         if (error.networkResponse != null && error.networkResponse.statusCode == 404) {
-                            // Если статистика не найдена, запускаем парсинг
-                            Log.w(TAG, "Statistics not found, starting parsing");
-                            performRegionParse(regionId, startDate, endDate, () -> {
-                                // После парсинга запускаем суммаризацию
-                                startRegionSummarization(regionId, () -> {
-                                    // После суммаризации запускаем классификацию
-                                    classifyArticles(() -> {
-                                        // После классификации получаем статистику снова
-                                        checkStatistics();
-                                    });
-                                });
-                            });
+                            Toast.makeText(getContext(), 
+                                "Нет новостей за выбранный период. Парсинг запущен автоматически через планировщик.",
+                                Toast.LENGTH_LONG).show();
                         } else {
                             handleError(error, "Error getting statistics");
                         }
