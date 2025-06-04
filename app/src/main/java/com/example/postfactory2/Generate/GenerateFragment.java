@@ -95,8 +95,9 @@ public class GenerateFragment extends Fragment {
 
         // Инициализация ProgressDialog
         progressDialog = new ProgressDialog(requireContext());
-        progressDialog.setMessage("Пожалуйста, подождите...");
         progressDialog.setCancelable(false);
+        progressDialog.setCanceledOnTouchOutside(false);
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 
         // Инициализация форматтера даты
         dateFormatter = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
@@ -138,9 +139,9 @@ public class GenerateFragment extends Fragment {
         themes.add("Дизайн");
 
         ArrayAdapter<String> themeAdapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_dropdown_item_1line,
-                themes
+            requireContext(),
+            android.R.layout.simple_dropdown_item_1line,
+            themes
         );
         spinnerTheme.setAdapter(themeAdapter);
         spinnerTheme.setThreshold(1); // Показывать список после ввода 1 символа
@@ -153,9 +154,9 @@ public class GenerateFragment extends Fragment {
         tones.add("Дружелюбный");
 
         ArrayAdapter<String> toneAdapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_dropdown_item_1line,
-                tones
+            requireContext(),
+            android.R.layout.simple_dropdown_item_1line,
+            tones
         );
         spinnerTone.setAdapter(toneAdapter);
         spinnerTone.setThreshold(1); // Показывать список после ввода 1 символа
@@ -266,15 +267,15 @@ public class GenerateFragment extends Fragment {
 
     private void showDatePicker(Calendar calendar, EditText editText) {
         DatePickerDialog datePickerDialog = new DatePickerDialog(
-                requireContext(),
-                android.R.style.Theme_Material_Light_Dialog,
-                (view, year, month, dayOfMonth) -> {
-                    calendar.set(year, month, dayOfMonth);
-                    editText.setText(dateFormatter.format(calendar.getTime()));
-                },
-                calendar.get(Calendar.YEAR),
-                calendar.get(Calendar.MONTH),
-                calendar.get(Calendar.DAY_OF_MONTH)
+            requireContext(),
+            android.R.style.Theme_Material_Light_Dialog,
+            (view, year, month, dayOfMonth) -> {
+                calendar.set(year, month, dayOfMonth);
+                editText.setText(dateFormatter.format(calendar.getTime()));
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
         );
         datePickerDialog.show();
     }
@@ -544,7 +545,7 @@ public class GenerateFragment extends Fragment {
         // Форматируем даты в нужный формат (ДД.ММ.ГГГГ)
         SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         SimpleDateFormat outputFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
-
+        
         String startDate;
         String endDate;
         try {
@@ -561,10 +562,10 @@ public class GenerateFragment extends Fragment {
         if (selectedRegionCode.equals("ekb")) {
             // Для Екатеринбурга используем эндпоинт парсинга
             String url = API_BASE_URL + "/api/v1/parse_once/";
-            Log.d(TAG, "Request URL: " + url);
-
+        Log.d(TAG, "Request URL: " + url);
+        
             progressDialog.setMessage("Подготовка данных...\nЭто может занять несколько минут");
-            progressDialog.show();
+        progressDialog.show();
 
             try {
                 JSONObject requestBody = new JSONObject();
@@ -573,11 +574,11 @@ public class GenerateFragment extends Fragment {
                 Log.d(TAG, "Request body: " + requestBody.toString());
 
                 JsonObjectRequest request = new JsonObjectRequest(
-                        Request.Method.POST,
-                        url,
+            Request.Method.POST,
+            url,
                         requestBody,
-                        response -> {
-                            try {
+            response -> {
+                try {
                                 Log.d(TAG, "Response received: " + response.toString());
 
                                 if (response.has("articles_count")) {
@@ -585,8 +586,8 @@ public class GenerateFragment extends Fragment {
                                     String responseMessage = response.getString("message");
                                     Log.i(TAG, "Articles found: " + articlesCount + ", Message: " + responseMessage);
 
-                                    progressDialog.dismiss();
-                                    if (articlesCount > 0) {
+                        progressDialog.dismiss();
+                        if (articlesCount > 0) {
                                         Toast.makeText(getContext(), responseMessage, Toast.LENGTH_LONG).show();
                                         // Запускаем скрытую суммаризацию для Екатеринбурга
                                         startEkbSummarization(() -> {
@@ -686,21 +687,21 @@ public class GenerateFragment extends Fragment {
                                             });
                                         });
                                     }
-                                } else {
-                                    progressDialog.dismiss();
+                    } else {
+                        progressDialog.dismiss();
                                     Log.w(TAG, "Unexpected response format: " + response.toString());
-                                    Toast.makeText(getContext(),
-                                            "Неожиданный формат ответа от сервера",
-                                            Toast.LENGTH_LONG).show();
-                                }
-                            } catch (Exception e) {
-                                progressDialog.dismiss();
-                                Log.e(TAG, "Error parsing response: " + e.getMessage(), e);
-                                Toast.makeText(getContext(), "Ошибка при обработке ответа: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                            }
-                        },
-                        error -> {
-                            progressDialog.dismiss();
+                        Toast.makeText(getContext(), 
+                            "Неожиданный формат ответа от сервера", 
+                            Toast.LENGTH_LONG).show();
+                    }
+                } catch (Exception e) {
+                    progressDialog.dismiss();
+                    Log.e(TAG, "Error parsing response: " + e.getMessage(), e);
+                    Toast.makeText(getContext(), "Ошибка при обработке ответа: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            },
+            error -> {
+                progressDialog.dismiss();
                             if (error.networkResponse != null && error.networkResponse.statusCode == 404) {
                                 // Если новости не найдены, запускаем парсинг
                                 startEkbParsing(startDate, endDate, onSuccess);
@@ -984,46 +985,46 @@ public class GenerateFragment extends Fragment {
                     },
                     error -> {
                         Log.e(TAG, "Error during region summarization: " + error.getMessage(), error);
-                        if (error.networkResponse != null) {
-                            try {
-                                String responseBody = new String(error.networkResponse.data, "utf-8");
-                                Log.e(TAG, "Error response body: " + responseBody);
-                                Log.e(TAG, "Error status code: " + error.networkResponse.statusCode);
+                if (error.networkResponse != null) {
+                    try {
+                        String responseBody = new String(error.networkResponse.data, "utf-8");
+                        Log.e(TAG, "Error response body: " + responseBody);
+                        Log.e(TAG, "Error status code: " + error.networkResponse.statusCode);
 
                                 if (error.networkResponse.statusCode == 400) {
                                     Toast.makeText(getContext(), "Неверный режим суммаризации", Toast.LENGTH_LONG).show();
                                 } else if (error.networkResponse.statusCode == 500) {
                                     Toast.makeText(getContext(), "Ошибка при суммаризации статей", Toast.LENGTH_LONG).show();
-                                } else {
+                        } else {
                                     Toast.makeText(getContext(), "Ошибка при суммаризации: " + error.networkResponse.statusCode, Toast.LENGTH_LONG).show();
-                                }
-                            } catch (Exception e) {
+                        }
+                    } catch (Exception e) {
                                 Log.e(TAG, "Error reading error response: " + e.getMessage(), e);
                                 Toast.makeText(getContext(), "Ошибка при суммаризации", Toast.LENGTH_LONG).show();
-                            }
-                        } else {
-                            Toast.makeText(getContext(), "Ошибка сети при суммаризации", Toast.LENGTH_LONG).show();
-                        }
-                        onSuccess.run(); // Продолжаем выполнение даже при ошибке суммаризации
                     }
-            ) {
-                @Override
-                public Map<String, String> getHeaders() {
-                    Map<String, String> headers = new HashMap<>();
+                } else {
+                            Toast.makeText(getContext(), "Ошибка сети при суммаризации", Toast.LENGTH_LONG).show();
+                }
+                        onSuccess.run(); // Продолжаем выполнение даже при ошибке суммаризации
+            }
+        ) {
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String> headers = new HashMap<>();
                     headers.put("Content-Type", "application/json");
                     Log.d(TAG, "Region summarization request headers: " + headers);
-                    return headers;
-                }
-            };
+                return headers;
+            }
+        };
 
-            request.setRetryPolicy(new DefaultRetryPolicy(
-                    300000, // 5 минут таймаут
-                    3,      // 3 попытки
-                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-            ));
+        request.setRetryPolicy(new DefaultRetryPolicy(
+            300000, // 5 минут таймаут
+            3,      // 3 попытки
+            DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+        ));
 
             Log.d(TAG, "Sending region summarization request...");
-            requestQueue.add(request);
+        requestQueue.add(request);
         } catch (Exception e) {
             Log.e(TAG, "Error creating region summarization request: " + e.getMessage(), e);
             Toast.makeText(getContext(), "Ошибка при создании запроса суммаризации", Toast.LENGTH_LONG).show();
@@ -1040,12 +1041,12 @@ public class GenerateFragment extends Fragment {
         progressDialog.show();
 
         StringRequest request = new StringRequest(
-                Request.Method.POST,
-                url,
-                response -> {
-                    try {
-                        // Декодируем ответ в UTF-8
-                        String decodedResponse = new String(response.getBytes("ISO-8859-1"), "UTF-8");
+            Request.Method.POST,
+            url,
+            response -> {
+                try {
+                    // Декодируем ответ в UTF-8
+                    String decodedResponse = new String(response.getBytes("ISO-8859-1"), "UTF-8");
                         Log.d(TAG, "Parse response: " + decodedResponse);
                         JSONObject jsonResponse = new JSONObject(decodedResponse);
 
@@ -1054,9 +1055,9 @@ public class GenerateFragment extends Fragment {
                             String message = jsonResponse.getString("message");
                             Log.i(TAG, "Articles parsed: " + articlesCount + ", Message: " + message);
 
-                            progressDialog.dismiss();
+                    progressDialog.dismiss();
                             Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
-                            onSuccess.run();
+                    onSuccess.run();
                         } else {
                             progressDialog.dismiss();
                             Log.w(TAG, "Unexpected parse response format: " + decodedResponse);
@@ -1064,14 +1065,14 @@ public class GenerateFragment extends Fragment {
                                     "Неожиданный формат ответа от сервера",
                                     Toast.LENGTH_LONG).show();
                         }
-                    } catch (Exception e) {
-                        progressDialog.dismiss();
+                } catch (Exception e) {
+                    progressDialog.dismiss();
                         Log.e(TAG, "Error parsing response: " + e.getMessage(), e);
                         Toast.makeText(getContext(), "Ошибка при обработке ответа: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                },
-                error -> {
-                    progressDialog.dismiss();
+                }
+            },
+            error -> {
+                progressDialog.dismiss();
                     handleError(error, "Error during EKB parsing");
                 }
         ) {
@@ -1112,6 +1113,16 @@ public class GenerateFragment extends Fragment {
         Log.d(TAG, "Starting region parse - URL: " + url);
         Log.d(TAG, "Formatted dates - Start: " + formattedStartDate + ", End: " + formattedEndDate);
 
+        // Закрываем предыдущий диалог, если он открыт
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.dismiss();
+        }
+        
+        // Создаем новый диалог
+        progressDialog = new ProgressDialog(requireContext());
+        progressDialog.setCancelable(false);
+        progressDialog.setCanceledOnTouchOutside(false);
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         progressDialog.setMessage("Выполняется парсинг новостей...\nЭто может занять несколько минут");
         progressDialog.show();
 
@@ -1130,29 +1141,40 @@ public class GenerateFragment extends Fragment {
                             Log.i(TAG, "Parse response: " + message + ", Articles: " + articlesCount);
 
                             if (articlesCount > 0) {
+                                if (progressDialog != null && progressDialog.isShowing()) {
+                                    progressDialog.dismiss();
+                                }
                                 Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
                                 onSuccess.run();
                             } else {
-                                progressDialog.dismiss();
+                                if (progressDialog != null && progressDialog.isShowing()) {
+                                    progressDialog.dismiss();
+                                }
                                 Toast.makeText(getContext(),
                                         "Новости за выбранный период не найдены",
                                         Toast.LENGTH_LONG).show();
                             }
                         } else {
-                            progressDialog.dismiss();
+                            if (progressDialog != null && progressDialog.isShowing()) {
+                                progressDialog.dismiss();
+                            }
                             Log.e(TAG, "Unexpected parse response format: " + decodedResponse);
                             Toast.makeText(getContext(),
                                     "Неожиданный формат ответа от сервера",
                                     Toast.LENGTH_LONG).show();
                         }
                     } catch (Exception e) {
-                        progressDialog.dismiss();
+                        if (progressDialog != null && progressDialog.isShowing()) {
+                            progressDialog.dismiss();
+                        }
                         Log.e(TAG, "Error parsing response: " + e.getMessage(), e);
                         Toast.makeText(getContext(), "Ошибка при обработке ответа", Toast.LENGTH_LONG).show();
                     }
                 },
                 error -> {
-                    progressDialog.dismiss();
+                    if (progressDialog != null && progressDialog.isShowing()) {
+                        progressDialog.dismiss();
+                    }
                     if (error.networkResponse != null) {
                         try {
                             String responseBody = new String(error.networkResponse.data, "utf-8");
@@ -1246,18 +1268,18 @@ public class GenerateFragment extends Fragment {
         Log.d(TAG, "Checking region news availability - URL: " + url);
 
         progressDialog.setMessage("Проверка наличия новостей...");
-        progressDialog.show();
+                progressDialog.show();
 
-        try {
-            JSONObject requestBody = new JSONObject();
+                try {
+                    JSONObject requestBody = new JSONObject();
             requestBody.put("start_date", startDate);
             requestBody.put("end_date", endDate);
             Log.d(TAG, "Request body: " + requestBody.toString());
 
             StringRequest request = new StringRequest(
-                    Request.Method.POST,
-                    url,
-                    response -> {
+                        Request.Method.POST,
+                        url,
+                        response -> {
                         try {
                             String decodedResponse = new String(response.getBytes("ISO-8859-1"), "UTF-8");
                             Log.d(TAG, "Response received: " + decodedResponse);
@@ -1265,24 +1287,24 @@ public class GenerateFragment extends Fragment {
                             JSONArray newsArray = new JSONArray(decodedResponse);
                             if (newsArray.length() > 0) {
                                 progressDialog.dismiss();
-                                Toast.makeText(getContext(),
+                                    Toast.makeText(getContext(), 
                                         "Найдено " + newsArray.length() + " новостей",
                                         Toast.LENGTH_LONG).show();
                                 onSuccess.run();
-                            } else {
+                                } else {
                                 progressDialog.dismiss();
                                 Toast.makeText(getContext(),
                                         "Новости за выбранный период не найдены",
                                         Toast.LENGTH_LONG).show();
-                            }
-                        } catch (Exception e) {
+                                }
+                            } catch (Exception e) {
                             progressDialog.dismiss();
                             Log.e(TAG, "Error parsing response: " + e.getMessage(), e);
                             Toast.makeText(getContext(), "Ошибка при обработке ответа: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                        }
-                    },
-                    error -> {
-                        progressDialog.dismiss();
+                            }
+                        },
+                        error -> {
+                            progressDialog.dismiss();
                         handleError(error, "Error checking region news availability");
                     }
             ) {
@@ -1324,36 +1346,36 @@ public class GenerateFragment extends Fragment {
     }
 
     private void handleError(VolleyError error, String errorPrefix) {
-        String errorMessage;
-        if (error.networkResponse != null) {
+                            String errorMessage;
+                            if (error.networkResponse != null) {
             try {
                 String responseBody = new String(error.networkResponse.data, "utf-8");
                 Log.e(TAG, "Error response body: " + responseBody);
                 Log.e(TAG, "Error status code: " + error.networkResponse.statusCode);
 
-                if (error.networkResponse.statusCode == 404) {
-                    errorMessage = "Новости за выбранный период не найдены";
+                                if (error.networkResponse.statusCode == 404) {
+                                    errorMessage = "Новости за выбранный период не найдены";
                 } else if (error.networkResponse.statusCode == 405) {
                     errorMessage = "Метод не поддерживается. Пожалуйста, обновите приложение";
                 } else {
                     JSONObject errorJson = new JSONObject(responseBody);
                     if (errorJson.has("detail")) {
                         errorMessage = errorJson.getString("detail");
-                    } else {
+                                } else {
                         errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
                     }
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error parsing error response: " + e.getMessage(), e);
-                errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
-            }
-        } else {
+                                    errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
+                                }
+                            } else {
             Log.e(TAG, "Network error: " + error.getMessage(), error);
-            errorMessage = "Ошибка сети. Проверьте подключение к интернету";
-        }
+                                errorMessage = "Ошибка сети. Проверьте подключение к интернету";
+                            }
         Log.e(TAG, errorPrefix + ": " + errorMessage, error);
-        Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
-    }
+                            Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+                        }
 
     private void classifyArticles(Runnable onSuccess) {
         String url;
@@ -1408,15 +1430,15 @@ public class GenerateFragment extends Fragment {
             };
 
             request.setRetryPolicy(new DefaultRetryPolicy(
-                    30000,
-                    3,
-                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-            ));
+                        30000,
+                        3,
+                        DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+                    ));
 
             Log.d(TAG, "Sending classification request...");
             requestQueue.add(request);
-        } catch (Exception e) {
-            progressDialog.dismiss();
+                } catch (Exception e) {
+                    progressDialog.dismiss();
             Log.e(TAG, "Error creating classification request: " + e.getMessage(), e);
             Toast.makeText(getContext(), "Ошибка при создании запроса классификации", Toast.LENGTH_LONG).show();
         }
@@ -1452,7 +1474,7 @@ public class GenerateFragment extends Fragment {
                             Log.w(TAG, "No matching region found for code: " + regionCode);
                         }
                         listener.onRegionIdReceived(regionId);
-                    } catch (Exception e) {
+        } catch (Exception e) {
                         Log.e(TAG, "Error parsing regions: " + e.getMessage(), e);
                         listener.onRegionIdReceived(null);
                     }
@@ -1506,25 +1528,25 @@ public class GenerateFragment extends Fragment {
                     if (selectedRegionCode.equals("ekb")) {
                         url = API_BASE_URL + "/api/fill_news/news/by-date/";
                         Log.d(TAG, "Generate request - URL: " + url);
-                        progressDialog.setMessage("Получение новостей...");
-                        progressDialog.show();
+            progressDialog.setMessage("Получение новостей...");
+            progressDialog.show();
 
-                        JSONObject requestBody = new JSONObject();
-                        requestBody.put("start_date", startDateEditText.getText().toString());
-                        requestBody.put("end_date", endDateEditText.getText().toString());
+            JSONObject requestBody = new JSONObject();
+            requestBody.put("start_date", startDateEditText.getText().toString());
+            requestBody.put("end_date", endDateEditText.getText().toString());
                         Log.d(TAG, "Request body: " + requestBody.toString());
 
-                        StringRequest request = new StringRequest(Request.Method.POST, url,
-                                response -> {
-                                    try {
-                                        String decodedResponse = new String(response.getBytes("ISO-8859-1"), "UTF-8");
-                                        Log.i(TAG, "Response: " + decodedResponse);
+            StringRequest request = new StringRequest(Request.Method.POST, url,
+                    response -> {
+                        try {
+                            String decodedResponse = new String(response.getBytes("ISO-8859-1"), "UTF-8");
+                            Log.i(TAG, "Response: " + decodedResponse);
 
-                                        // Получаем выбранные параметры
-                                        String tone = spinnerTone.getText().toString();
-                                        String length = getSelectedLength();
-                                        String details = etDetails.getText().toString();
-                                        String[] socialNetworks = getSelectedSocialNetworks();
+                            // Получаем выбранные параметры
+                            String tone = spinnerTone.getText().toString();
+                            String length = getSelectedLength();
+                            String details = etDetails.getText().toString();
+                            String[] socialNetworks = getSelectedSocialNetworks();
 
                                         Log.d(TAG, "Generation parameters - Theme: " + theme +
                                                 ", Tone: " + tone +
@@ -1532,34 +1554,34 @@ public class GenerateFragment extends Fragment {
                                                 ", Details: " + details +
                                                 ", Networks: " + String.join(", ", socialNetworks));
 
-                                        // Передача данных в NewsListFragment
-                                        Bundle args = new Bundle();
-                                        args.putString("response", decodedResponse);
-                                        args.putString("theme_id", String.valueOf(themeId));
-                                        args.putString("tone", tone);
-                                        args.putString("length", length);
-                                        args.putString("details", details);
-                                        args.putStringArray("social_networks", socialNetworks);
+                            // Передача данных в NewsListFragment
+                            Bundle args = new Bundle();
+                            args.putString("response", decodedResponse);
+                            args.putString("theme_id", String.valueOf(themeId));
+                            args.putString("tone", tone);
+                            args.putString("length", length);
+                            args.putString("details", details);
+                            args.putStringArray("social_networks", socialNetworks);
                                         args.putString("region_code", selectedRegionCode);
 
-                                        NewsListFragment newsListFragment = new NewsListFragment();
-                                        newsListFragment.setArguments(args);
+                            NewsListFragment newsListFragment = new NewsListFragment();
+                            newsListFragment.setArguments(args);
 
-                                        requireActivity().getSupportFragmentManager()
-                                                .beginTransaction()
-                                                .replace(R.id.fragment_container, newsListFragment)
-                                                .addToBackStack(null)
-                                                .commit();
+                            requireActivity().getSupportFragmentManager()
+                                    .beginTransaction()
+                                    .replace(R.id.fragment_container, newsListFragment)
+                                    .addToBackStack(null)
+                                    .commit();
 
-                                        progressDialog.dismiss();
-                                    } catch (Exception e) {
-                                        progressDialog.dismiss();
-                                        Log.e(TAG, "Error processing response: " + e.getMessage(), e);
-                                        Toast.makeText(getContext(), "Ошибка обработки ответа: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                    }
-                                },
-                                error -> {
-                                    progressDialog.dismiss();
+                            progressDialog.dismiss();
+                        } catch (Exception e) {
+                            progressDialog.dismiss();
+                            Log.e(TAG, "Error processing response: " + e.getMessage(), e);
+                            Toast.makeText(getContext(), "Ошибка обработки ответа: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    },
+                    error -> {
+                        progressDialog.dismiss();
                                     handleError(error, "Error during request");
                                 }
                         ) {
@@ -1572,7 +1594,7 @@ public class GenerateFragment extends Fragment {
                             public byte[] getBody() {
                                 try {
                                     return requestBody.toString().getBytes("utf-8");
-                                } catch (Exception e) {
+                            } catch (Exception e) {
                                     Log.e(TAG, "Error creating request body: " + e.getMessage(), e);
                                     return null;
                                 }
@@ -1595,7 +1617,7 @@ public class GenerateFragment extends Fragment {
 
                         Log.d(TAG, "Sending generate request...");
                         requestQueue.add(request);
-                    } else {
+                        } else {
                         getRegionId(selectedRegionCode, regionId -> {
                             if (regionId == null) {
                                 Toast.makeText(getContext(), "Ошибка: регион не найден", Toast.LENGTH_LONG).show();
@@ -1661,22 +1683,22 @@ public class GenerateFragment extends Fragment {
                                         error -> {
                                             progressDialog.dismiss();
                                             handleError(error, "Error during request");
-                                        }
-                                ) {
-                                    @Override
-                                    public String getBodyContentType() {
-                                        return "application/json; charset=utf-8";
-                                    }
+                    }
+            ) {
+                @Override
+                public String getBodyContentType() {
+                    return "application/json; charset=utf-8";
+                }
 
-                                    @Override
-                                    public byte[] getBody() {
-                                        try {
-                                            return requestBody.toString().getBytes("utf-8");
-                                        } catch (Exception e) {
-                                            Log.e(TAG, "Error creating request body: " + e.getMessage(), e);
-                                            return null;
-                                        }
-                                    }
+                @Override
+                public byte[] getBody() {
+                    try {
+                        return requestBody.toString().getBytes("utf-8");
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error creating request body: " + e.getMessage(), e);
+                        return null;
+                    }
+                }
 
                                     @Override
                                     public Map<String, String> getHeaders() {
@@ -1685,16 +1707,16 @@ public class GenerateFragment extends Fragment {
                                         Log.d(TAG, "Request headers: " + headers);
                                         return headers;
                                     }
-                                };
+            };
 
-                                request.setRetryPolicy(new DefaultRetryPolicy(
-                                        30000,
-                                        3,
-                                        DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-                                ));
+            request.setRetryPolicy(new DefaultRetryPolicy(
+                    30000,
+                    3,
+                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+            ));
 
                                 Log.d(TAG, "Sending generate request...");
-                                requestQueue.add(request);
+            requestQueue.add(request);
                             } catch (Exception e) {
                                 progressDialog.dismiss();
                                 Log.e(TAG, "Error creating request: " + e.getMessage(), e);
@@ -1736,7 +1758,7 @@ public class GenerateFragment extends Fragment {
 
     private String getSelectedLength() {
         int selectedId = rgPostLength.getCheckedRadioButtonId();
-
+        
         if (selectedId == R.id.rbShort) {
             return "Короткий";
         } else if (selectedId == R.id.rbMedium) {
@@ -1765,7 +1787,7 @@ public class GenerateFragment extends Fragment {
 
         if (periodRadioGroup.getCheckedRadioButtonId() == R.id.customRadio) {
             if (startDateEditText.getText().toString().isEmpty() ||
-                    endDateEditText.getText().toString().isEmpty()) {
+                endDateEditText.getText().toString().isEmpty()) {
                 Toast.makeText(getContext(), "Выберите даты", Toast.LENGTH_SHORT).show();
                 return false;
             }
@@ -1903,76 +1925,82 @@ public class GenerateFragment extends Fragment {
     }
 
     private void startRegionParsing(int regionId) {
-        String url = String.format(REGIONS_API_URL + "/regions/%d/parse/", regionId);
+        // Получаем текущую дату и дату неделю назад
+        Calendar endDate = Calendar.getInstance();
+        Calendar startDate = Calendar.getInstance();
+        startDate.add(Calendar.DAY_OF_MONTH, -7);
+        
+        String formattedStartDate = formatDateForParsing(dateFormatter.format(startDate.getTime()));
+        String formattedEndDate = formatDateForParsing(dateFormatter.format(endDate.getTime()));
+        
+        String url = String.format(REGIONS_API_URL + "/regions/%d/parse_period/?start_date=%s&end_date=%s",
+                regionId, formattedStartDate, formattedEndDate);
         Log.d(TAG, "Starting region parsing - Region ID: " + regionId);
         Log.d(TAG, "Request URL: " + url);
+        Log.d(TAG, "Formatted dates - Start: " + formattedStartDate + ", End: " + formattedEndDate);
+        
         progressDialog.setMessage("Запуск парсинга для нового региона...");
         progressDialog.show();
 
-        try {
-            JSONObject requestBody = new JSONObject();
-            requestBody.put("interval_hours", 24);
-            requestBody.put("period_days", 7);
-            requestBody.put("check_previous_days", 2);
-            Log.d(TAG, "Parse request body: " + requestBody.toString());
-
-            JsonObjectRequest request = new JsonObjectRequest(
-                    Request.Method.POST,
-                    url,
-                    requestBody,
-                    response -> {
-                        progressDialog.dismiss();
-                        Log.i(TAG, "Region parsing started successfully - Response: " + response.toString());
-                        Toast.makeText(getContext(), "Парсинг для региона запущен", Toast.LENGTH_SHORT).show();
-                    },
-                    error -> {
-                        progressDialog.dismiss();
-                        String errorMessage;
-                        if (error.networkResponse != null) {
-                            try {
-                                String responseBody = new String(error.networkResponse.data, "utf-8");
-                                Log.e(TAG, "Parse error response body: " + responseBody);
-                                Log.e(TAG, "Parse error status code: " + error.networkResponse.statusCode);
-                                JSONObject errorJson = new JSONObject(responseBody);
-                                if (errorJson.has("detail")) {
-                                    errorMessage = errorJson.getString("detail");
-                                    Log.e(TAG, "Parse error detail: " + errorMessage);
-                                } else {
-                                    errorMessage = "Ошибка запуска парсинга: " + error.networkResponse.statusCode;
-                                }
-                            } catch (Exception e) {
-                                Log.e(TAG, "Error parsing error response: " + e.getMessage(), e);
+        StringRequest request = new StringRequest(
+                Request.Method.POST,
+                url,
+                response -> {
+                    progressDialog.dismiss();
+                    try {
+                        String decodedResponse = new String(response.getBytes("ISO-8859-1"), "UTF-8");
+                        Log.i(TAG, "Region parsing started successfully - Response: " + decodedResponse);
+                        JSONObject jsonResponse = new JSONObject(decodedResponse);
+                        String message = jsonResponse.getString("message");
+                        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error parsing response: " + e.getMessage(), e);
+                        Toast.makeText(getContext(), "Ошибка при обработке ответа", Toast.LENGTH_SHORT).show();
+                    }
+                },
+                error -> {
+                    progressDialog.dismiss();
+                    String errorMessage;
+                    if (error.networkResponse != null) {
+                        try {
+                            String responseBody = new String(error.networkResponse.data, "utf-8");
+                            Log.e(TAG, "Parse error response body: " + responseBody);
+                            Log.e(TAG, "Parse error status code: " + error.networkResponse.statusCode);
+                            JSONObject errorJson = new JSONObject(responseBody);
+                            if (errorJson.has("detail")) {
+                                errorMessage = errorJson.getString("detail");
+                                Log.e(TAG, "Parse error detail: " + errorMessage);
+                            } else {
                                 errorMessage = "Ошибка запуска парсинга: " + error.networkResponse.statusCode;
                             }
-                        } else {
-                            Log.e(TAG, "Network error during parsing: " + error.getMessage(), error);
-                            errorMessage = "Ошибка сети при запуске парсинга";
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error parsing error response: " + e.getMessage(), e);
+                            errorMessage = "Ошибка запуска парсинга: " + error.networkResponse.statusCode;
                         }
-                        Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+                    } else {
+                        Log.e(TAG, "Network error during parsing: " + error.getMessage(), error);
+                        errorMessage = "Ошибка сети при запуске парсинга";
                     }
-            ) {
-                @Override
-                public Map<String, String> getHeaders() {
-                    Map<String, String> headers = new HashMap<>();
-                    headers.put("Content-Type", "application/json");
-                    Log.d(TAG, "Parse request headers: " + headers);
-                    return headers;
+                    Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
                 }
-            };
+        ) {
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String> headers = new HashMap<>();
+                headers.put("accept", "application/json");
+                Log.d(TAG, "Parse request headers: " + headers);
+                return headers;
+            }
+        };
 
-            request.setRetryPolicy(new DefaultRetryPolicy(
-                    10000,
-                    DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-            ));
+        request.setRetryPolicy(new DefaultRetryPolicy(
+                300000, // 5 минут таймаут
+                3,      // 3 попытки
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+        ));
 
-            Log.d(TAG, "Sending start parsing request...");
-            requestQueue.add(request);
-        } catch (Exception e) {
-            progressDialog.dismiss();
-            Log.e(TAG, "Error starting region parsing: " + e.getMessage(), e);
-            Toast.makeText(getContext(), "Ошибка при запуске парсинга", Toast.LENGTH_SHORT).show();
-        }
+        Log.d(TAG, "Sending start parsing request...");
+        requestQueue.add(request);
     }
 
     @Override
