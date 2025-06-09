@@ -75,7 +75,7 @@ public class UpdateScheduleFragment extends Fragment {
         rootView.findViewById(R.id.startParsingButton).setOnClickListener(v -> startParsing());
         rootView.findViewById(R.id.deleteScheduleButton).setOnClickListener(v -> deleteSchedule());
         rootView.findViewById(R.id.parseOnceButton).setOnClickListener(v -> parseOnce());
-        rootView.findViewById(R.id.startSummarizeButton).setOnClickListener(v -> startSummarization());
+
 
         return rootView;
     }
@@ -211,47 +211,7 @@ public class UpdateScheduleFragment extends Fragment {
         requestQueue.add(request);
     }
 
-    private void startSummarization() {
-        String url = "http://2.59.40.125:8000/api/summarize/all";
-        Log.d(TAG, "Start summarization request to: " + url);
 
-        progressDialog.setMessage("Запуск суммаризации... Это может занять продолжительное время.");
-        progressDialog.show();
-
-        StringRequest request = new StringRequest(
-            Request.Method.POST,
-            url,
-            response -> {
-                Log.d(TAG, "Response: " + response);
-                progressDialog.dismiss();
-                Toast.makeText(getContext(), "Суммаризация успешно запущена!", Toast.LENGTH_LONG).show();
-            },
-            error -> {
-                progressDialog.dismiss();
-                String errorMessage = "Ошибка сети";
-                if (error.networkResponse != null) {
-                    errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
-                    try {
-                        String responseBody = new String(error.networkResponse.data, "utf-8");
-                        Log.e(TAG, "Server error details: " + error.networkResponse.statusCode);
-                        Log.e(TAG, "Server error data: " + responseBody);
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error reading error response: " + e.getMessage());
-                    }
-                }
-                Log.e(TAG, "Error starting summarization: " + errorMessage, error);
-                Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
-            }
-        );
-
-        request.setRetryPolicy(new DefaultRetryPolicy(
-            600000, // 10 минут
-            3,      // 3 попытки
-            DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-        ));
-
-        requestQueue.add(request);
-    }
 
     private boolean validateInputs() {
         if (intervalEditText.getText().toString().isEmpty() ||

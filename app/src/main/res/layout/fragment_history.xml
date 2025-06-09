@@ -11,69 +11,17 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- Фильтры -->
-        <HorizontalScrollView
+        <!-- Заголовок -->
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingVertical="12dp"
-            android:paddingHorizontal="8dp"
-            android:scrollbars="none"
+            android:text="История генераций"
+            android:textSize="24sp"
+            android:textColor="#212121"
+            android:fontFamily="sans-serif-medium"
+            android:padding="16dp"
             android:background="#FFFFFF"
-            android:elevation="4dp">
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingHorizontal="8dp">
-
-                <!-- Кнопки-фильтры -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/filter_all"
-                    android:layout_width="wrap_content"
-                    android:layout_height="40dp"
-                    android:text="Все"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
-                    app:backgroundTint="#2196F3"
-                    app:cornerRadius="20dp"
-                    android:paddingHorizontal="16dp"
-                    android:fontFamily="sans-serif-medium"
-                    android:textAllCaps="false" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/filter_vk"
-                    android:layout_width="wrap_content"
-                    android:layout_height="40dp"
-                    android:text="VKontakte"
-                    android:textColor="#757575"
-                    android:textSize="14sp"
-                    app:backgroundTint="#FFFFFF"
-                    app:strokeColor="#E0E0E0"
-                    app:strokeWidth="1dp"
-                    app:cornerRadius="20dp"
-                    android:layout_marginStart="8dp"
-                    android:paddingHorizontal="16dp"
-                    android:fontFamily="sans-serif-medium"
-                    android:textAllCaps="false" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/filter_instagram"
-                    android:layout_width="wrap_content"
-                    android:layout_height="40dp"
-                    android:text="Instagram"
-                    android:textColor="#757575"
-                    android:textSize="14sp"
-                    app:backgroundTint="#FFFFFF"
-                    app:strokeColor="#E0E0E0"
-                    app:strokeWidth="1dp"
-                    app:cornerRadius="20dp"
-                    android:layout_marginStart="8dp"
-                    android:paddingHorizontal="16dp"
-                    android:fontFamily="sans-serif-medium"
-                    android:textAllCaps="false" />
-            </LinearLayout>
-        </HorizontalScrollView>
+            android:elevation="4dp"/>
 
         <!-- RecyclerView для карточек -->
         <androidx.recyclerview.widget.RecyclerView
