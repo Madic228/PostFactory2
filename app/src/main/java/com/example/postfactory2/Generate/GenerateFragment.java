@@ -1228,7 +1228,47 @@ public class GenerateFragment extends Fragment {
                                 }
                             } else {
                                 Log.d(TAG, "Статьи не найдены");
-                                Toast.makeText(getContext(), "Нет новостей за выбранный период", Toast.LENGTH_LONG).show();
+                                // Запускаем парсинг для региона
+                                String parseUrl = String.format(REGIONS_API_URL + "/regions/%s/parse_period/?start_date=%s&end_date=%s",
+                                        regionIdInt, startDate, endDate);
+                                Log.d(TAG, "Запуск парсинга для региона - URL: " + parseUrl);
+                                
+                                StringRequest parseRequest = new StringRequest(Request.Method.POST, parseUrl,
+                                        parseResponse -> {
+                                            try {
+                                                Log.d(TAG, "Ответ парсинга: " + parseResponse);
+                                                JSONObject jsonResponse = new JSONObject(parseResponse);
+                                                int articlesCount = jsonResponse.optInt("articles_count", 0);
+                                                String message = jsonResponse.optString("message", "");
+                                                Log.i(TAG, "Статьи собраны: " + articlesCount + ", Сообщение: " + message);
+                                                
+                                                if (articlesCount > 0) {
+                                                    // Если статьи собраны, проверяем их наличие снова
+                                                    checkRegionNewsAvailability(regionId, startDate, endDate, onSuccess);
+                                                } else {
+                                                    progressDialog.dismiss();
+                                                    Toast.makeText(getContext(), "Не удалось найти новости для выбранного периода", Toast.LENGTH_LONG).show();
+                                                }
+                                            } catch (Exception e) {
+                                                progressDialog.dismiss();
+                                                Log.e(TAG, "Ошибка обработки ответа парсинга: " + e.getMessage(), e);
+                                                Toast.makeText(getContext(), "Ошибка при парсинге новостей: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                            }
+                                        },
+                                        error -> {
+                                            progressDialog.dismiss();
+                                            handleError(error, "Ошибка при парсинге новостей");
+                                        }
+                                ) {
+                                    @Override
+                                    public Map<String, String> getHeaders() {
+                                        Map<String, String> headers = new HashMap<>();
+                                        headers.put("accept", "application/json");
+                                        return headers;
+                                    }
+                                };
+
+                                requestQueue.add(parseRequest);
                             }
                         } catch (Exception e) {
                             Log.e(TAG, "Ошибка обработки ответа: " + e.getMessage(), e);
@@ -1546,6 +1586,21 @@ public class GenerateFragment extends Fragment {
                         headers.put("accept", "application/json; charset=utf-8");
                         Log.d(TAG, "Request headers: " + headers);
                         return headers;
+                    }
+
+                    @Override
+                    public byte[] getBody() {
+                        try {
+                            return requestBody.toString().getBytes("utf-8");
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error creating request body", e);
+                            return null;
+                        }
+                    }
+
+                    @Override
+                    public String getBodyContentType() {
+                        return "application/json; charset=utf-8";
                     }
                 };
 
