@@ -66,7 +66,7 @@ public class GenerateFragment extends Fragment {
     private static final String EKB_PARSE_URL = API_BASE_URL + "/api/parse/parse_once/";
 
     private AutoCompleteTextView spinnerTheme, spinnerTone, regionSpinner;
-    private EditText etDetails, startDateEditText, endDateEditText;
+    private EditText startDateEditText, endDateEditText;
     private RadioGroup periodRadioGroup, rgPostLength;
     private LinearLayout customDateLayout;
     private RecyclerView rvSocialNetworks;
@@ -87,7 +87,6 @@ public class GenerateFragment extends Fragment {
         spinnerTheme = view.findViewById(R.id.spinerTheme);
         spinnerTone = view.findViewById(R.id.spinnerTone);
         regionSpinner = view.findViewById(R.id.regionSpinner);
-        etDetails = view.findViewById(R.id.etDetails);
         startDateEditText = view.findViewById(R.id.startDateEditText);
         endDateEditText = view.findViewById(R.id.endDateEditText);
         periodRadioGroup = view.findViewById(R.id.periodRadioGroup);
@@ -1540,7 +1539,7 @@ public class GenerateFragment extends Fragment {
                                 // Получаем выбранные параметры
                                 String tone = spinnerTone.getText().toString();
                                 String length = getSelectedLength();
-                                String details = etDetails.getText().toString();
+                                String details = "";
                                 String[] socialNetworks = getSelectedSocialNetworks();
 
                                 Log.d(TAG, "Generation parameters - Theme: " + themeId +
@@ -1642,7 +1641,7 @@ public class GenerateFragment extends Fragment {
                                         // Получаем выбранные параметры
                                         String tone = spinnerTone.getText().toString();
                                         String length = getSelectedLength();
-                                        String details = etDetails.getText().toString();
+                                        String details = "";
                                         String[] socialNetworks = getSelectedSocialNetworks();
 
                                         Log.d(TAG, "Generation parameters - Theme: " + themeId +

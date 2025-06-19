@@ -471,8 +471,40 @@ public class    NewsListFragment extends Fragment {
                 ));
                 requestQueue.add(request);
             } else {
-                // Логика для других регионов (оставить как есть или реализовать аналогично)
-                Toast.makeText(getContext(), "Суммаризация для других регионов пока не реализована", Toast.LENGTH_SHORT).show();
+                // Для регионов — суммаризация по ссылке через /summarize/by-link-region
+                showProgressDialog();
+                String url = "http://192.168.0.103:8000/summarize/by-link-region";
+                org.json.JSONObject body = new org.json.JSONObject();
+                try {
+                    body.put("link", newsItem.getLink());
+                } catch (org.json.JSONException e) {
+                    hideProgressDialog();
+                    Toast.makeText(getContext(), "Ошибка формирования запроса", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                com.android.volley.toolbox.JsonObjectRequest request = new com.android.volley.toolbox.JsonObjectRequest(
+                    com.android.volley.Request.Method.POST, url, body,
+                    response -> {
+                        hideProgressDialog();
+                        String summarizedText = response.optString("summarized_text", "");
+                        if (!summarizedText.isEmpty()) {
+                            openResultFragment(newsItem, summarizedText);
+                        } else {
+                            Toast.makeText(getContext(), "Не удалось получить суммаризацию", Toast.LENGTH_SHORT).show();
+                        }
+                    },
+                    error -> {
+                        hideProgressDialog();
+                        Toast.makeText(getContext(), "Ошибка при суммаризации", Toast.LENGTH_SHORT).show();
+                    }
+                );
+                // Устанавливаем увеличенный таймаут (5 минут)
+                request.setRetryPolicy(new com.android.volley.DefaultRetryPolicy(
+                    300000, // 5 минут
+                    3,
+                    com.android.volley.DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+                ));
+                requestQueue.add(request);
             }
         }
     }
