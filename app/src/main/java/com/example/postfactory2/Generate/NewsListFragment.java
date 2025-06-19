@@ -110,11 +110,6 @@ public class    NewsListFragment extends Fragment {
             String response = getArguments().getString("response");
             if (response != null) {
                 parseResponse(response);
-                // Проверяем, не возвращаемся ли мы из ResultFragment
-                boolean isReturningFromResult = getArguments().getBoolean("from_result", false);
-                if (!isReturningFromResult) {
-                    checkAndUpdateSummarizedText();
-                }
             } else {
                 Toast.makeText(getContext(), "Нет данных для отображения", Toast.LENGTH_SHORT).show();
             }
@@ -142,7 +137,8 @@ public class    NewsListFragment extends Fragment {
                     item.getString("source"),
                     item.getString("link"),
                     item.optString("summarized_text", ""),
-                    item.getInt("topic_id")
+                    item.getInt("topic_id"),
+                    item.optString("content", "")
                 );
                 newsItems.add(newsItem);
                 Log.d(TAG, "Added news item: " + newsItem.getTitle() + " with topic_id: " + newsItem.getTopicId());
@@ -205,35 +201,6 @@ public class    NewsListFragment extends Fragment {
     private void hideProgressDialog() {
         if (progressDialog != null && progressDialog.isShowing()) {
             progressDialog.dismiss();
-        }
-    }
-
-    private void checkAndUpdateSummarizedText() {
-        if (newsItems == null) return;
-
-        // Проверяем, не возвращаемся ли мы из ResultFragment
-        boolean isReturningFromResult = getArguments() != null && getArguments().getBoolean("from_result", false);
-        
-        // Собираем список статей без summarized_text
-        List<NewsItem> articlesToUpdate = new ArrayList<>();
-        List<Integer> positions = new ArrayList<>();
-        
-        for (int i = 0; i < newsItems.size(); i++) {
-            NewsItem newsItem = newsItems.get(i);
-            // Проверяем, что summarized_text действительно пустой
-            if (newsItem.getSummarizedText() == null || 
-                newsItem.getSummarizedText().isEmpty() || 
-                newsItem.getSummarizedText().equals("Сгенерированный текст")) {
-                articlesToUpdate.add(newsItem);
-                positions.add(i);
-            }
-        }
-
-        // Запускаем суммаризацию только если есть статьи для обновления И мы не возвращаемся из ResultFragment
-        if (!articlesToUpdate.isEmpty() && !isReturningFromResult) {
-            showProgressDialog();
-            Toast.makeText(requireContext(), "Начинаем суммаризацию текста...", Toast.LENGTH_SHORT).show();
-            startSummarization(articlesToUpdate, positions);
         }
     }
 
@@ -463,37 +430,75 @@ public class    NewsListFragment extends Fragment {
         if (newsItem.getSummarizedText() != null && 
             !newsItem.getSummarizedText().isEmpty() && 
             !newsItem.getSummarizedText().equals("Сгенерированный текст")) {
-            
             // Если текст уже есть, сразу переходим к результату
-            ResultFragment resultFragment = new ResultFragment();
-            Bundle resultArgs = new Bundle();
-            
-            resultArgs.putString("post_theme", newsItem.getTitle());
-            resultArgs.putString("publication_date", newsItem.getPublicationDate());
-            resultArgs.putString("source", newsItem.getSource());
-            resultArgs.putString("link", newsItem.getLink());
-            resultArgs.putString("summarized_text", newsItem.getSummarizedText());
-            
-            // Добавляем параметры генерации из аргументов
-            Bundle args = getArguments();
-            if (args != null) {
-                resultArgs.putString("tone", args.getString("tone"));
-                resultArgs.putString("length", args.getString("length"));
-                resultArgs.putString("details", args.getString("details"));
-                resultArgs.putStringArray("social_networks", args.getStringArray("social_networks"));
-            }
-            
-            resultFragment.setArguments(resultArgs);
-            
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, resultFragment)
-                    .addToBackStack("ResultFragment")
-                    .commit();
+            openResultFragment(newsItem, newsItem.getSummarizedText());
         } else {
-            // Если текста нет, показываем сообщение
-            Toast.makeText(getContext(), "Текст для этой новости еще не сгенерирован", Toast.LENGTH_LONG).show();
+            // Для Екатеринбурга — суммаризация по ссылке
+            Bundle args = getArguments();
+            String regionCode = args != null ? args.getString("region_code", "ekb") : "ekb";
+            if (regionCode.equals("ekb")) {
+                showProgressDialog();
+                String url = "http://192.168.0.103:8000/summarize/by-link-ekb";
+                org.json.JSONObject body = new org.json.JSONObject();
+                try {
+                    body.put("link", newsItem.getLink());
+                } catch (org.json.JSONException e) {
+                    hideProgressDialog();
+                    Toast.makeText(getContext(), "Ошибка формирования запроса", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                com.android.volley.toolbox.JsonObjectRequest request = new com.android.volley.toolbox.JsonObjectRequest(
+                    com.android.volley.Request.Method.POST, url, body,
+                    response -> {
+                        hideProgressDialog();
+                        String summarizedText = response.optString("summarized_text", "");
+                        if (!summarizedText.isEmpty()) {
+                            openResultFragment(newsItem, summarizedText);
+                        } else {
+                            Toast.makeText(getContext(), "Не удалось получить суммаризацию", Toast.LENGTH_SHORT).show();
+                        }
+                    },
+                    error -> {
+                        hideProgressDialog();
+                        Toast.makeText(getContext(), "Ошибка при суммаризации", Toast.LENGTH_SHORT).show();
+                    }
+                );
+                // Устанавливаем увеличенный таймаут (5 минут)
+                request.setRetryPolicy(new com.android.volley.DefaultRetryPolicy(
+                    300000, // 5 минут
+                    3,
+                    com.android.volley.DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+                ));
+                requestQueue.add(request);
+            } else {
+                // Логика для других регионов (оставить как есть или реализовать аналогично)
+                Toast.makeText(getContext(), "Суммаризация для других регионов пока не реализована", Toast.LENGTH_SHORT).show();
+            }
         }
+    }
+
+    private void openResultFragment(NewsItem newsItem, String summarizedText) {
+        ResultFragment resultFragment = new ResultFragment();
+        Bundle resultArgs = new Bundle();
+        resultArgs.putString("post_theme", newsItem.getTitle());
+        resultArgs.putString("publication_date", newsItem.getPublicationDate());
+        resultArgs.putString("source", newsItem.getSource());
+        resultArgs.putString("link", newsItem.getLink());
+        resultArgs.putString("summarized_text", summarizedText);
+        // Добавляем параметры генерации из аргументов
+        Bundle args = getArguments();
+        if (args != null) {
+            resultArgs.putString("tone", args.getString("tone"));
+            resultArgs.putString("length", args.getString("length"));
+            resultArgs.putString("details", args.getString("details"));
+            resultArgs.putStringArray("social_networks", args.getStringArray("social_networks"));
+        }
+        resultFragment.setArguments(resultArgs);
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, resultFragment)
+                .addToBackStack("ResultFragment")
+                .commit();
     }
 
     @Override
