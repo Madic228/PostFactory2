@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
@@ -131,17 +132,27 @@ public class    NewsListFragment extends Fragment {
 
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject item = jsonArray.getJSONObject(i);
+                String summarizedText = item.optString("summarized_text", "");
+                // Если сервер возвращает строку "null", заменяем на пустую строку
+                if ("null".equals(summarizedText)) {
+                    summarizedText = "";
+                }
+                Log.d(TAG, "News item " + i + " - Title: " + item.getString("title") + 
+                          ", Summarized text length: " + summarizedText.length() + 
+                          ", Summarized text: '" + summarizedText + "'");
+                
                 NewsItem newsItem = new NewsItem(
                     item.getString("title"),
                     item.getString("publication_date"),
                     item.getString("source"),
                     item.getString("link"),
-                    item.optString("summarized_text", ""),
+                    summarizedText,
                     item.getInt("topic_id"),
                     item.optString("content", "")
                 );
                 newsItems.add(newsItem);
-                Log.d(TAG, "Added news item: " + newsItem.getTitle() + " with topic_id: " + newsItem.getTopicId());
+                Log.d(TAG, "Added news item: " + newsItem.getTitle() + " with topic_id: " + newsItem.getTopicId() + 
+                          ", summarized_text: '" + newsItem.getSummarizedText() + "'");
             }
 
             if (newsItems.isEmpty()) {
@@ -242,8 +253,14 @@ public class    NewsListFragment extends Fragment {
                             // Проверяем статус ответа
                             if (decodedResponse.contains("Суммаризация завершена") || 
                                 decodedResponse.contains("Суммаризация для региона")) {
-                                // Запускаем проверку обновленных данных
-                                startUpdateCheck();
+                                // Для Екатеринбурга запускаем проверку обновленных данных
+                                if (regionCode.equals("ekb")) {
+                                    startUpdateCheck();
+                                } else {
+                                    // Для регионов просто скрываем диалог и показываем сообщение
+                                    hideProgressDialog();
+                                    Toast.makeText(requireContext(), "Суммаризация завершена", Toast.LENGTH_SHORT).show();
+                                }
                             } else {
                                 hideProgressDialog();
                                 Toast.makeText(requireContext(), "Ошибка при суммаризации: " + decodedResponse, Toast.LENGTH_SHORT).show();
@@ -327,115 +344,218 @@ public class    NewsListFragment extends Fragment {
         Bundle args = getArguments();
         if (args == null) return;
         
-        String url = "http://2.59.40.125:8000/api/fill_news/news/by-date/";
+        String regionCode = args.getString("region_code", "ekb");
+        String url;
         
-        JSONObject requestBody = new JSONObject();
-        try {
-            requestBody.put("start_date", args.getString("start_date"));
-            requestBody.put("end_date", args.getString("end_date"));
+        if (regionCode.equals("ekb")) {
+            // Для Екатеринбурга используем старый эндпоинт
+            url = "http://2.59.40.125:8000/api/fill_news/news/by-date/";
             
-            // Логируем параметры запроса
-            Log.d(TAG, "Request body: " + requestBody.toString());
-            Log.d(TAG, "Theme ID from args: " + args.getString("theme_id"));
+            JSONObject requestBody = new JSONObject();
+            try {
+                requestBody.put("start_date", args.getString("start_date"));
+                requestBody.put("end_date", args.getString("end_date"));
+                
+                // Логируем параметры запроса
+                Log.d(TAG, "EKB Request body: " + requestBody.toString());
+                Log.d(TAG, "Theme ID from args: " + args.getString("theme_id"));
+                
+            } catch (Exception e) {
+                Log.e(TAG, "Error creating EKB request body: " + e.getMessage(), e);
+                return;
+            }
             
-        } catch (Exception e) {
-            Log.e(TAG, "Error creating request body: " + e.getMessage(), e);
-            return;
-        }
-        
-        StringRequest request = new StringRequest(Request.Method.POST, url,
-                response -> {
-                    try {
-                        // Преобразование ответа в правильную кодировку
-                        String decodedResponse = new String(response.getBytes("ISO-8859-1"), "UTF-8");
-                        Log.d(TAG, "Raw response: " + decodedResponse);
-                        
-                        // Фильтруем новости по теме
-                        JSONArray allNews = new JSONArray(decodedResponse);
-                        JSONArray filteredNews = new JSONArray();
-                        int themeId = Integer.parseInt(args.getString("theme_id"));
-                        
-                        Log.d(TAG, "Total news count: " + allNews.length());
-                        Log.d(TAG, "Filtering for theme ID: " + themeId);
-                        
-                        for (int i = 0; i < allNews.length(); i++) {
-                            JSONObject newsItem = allNews.getJSONObject(i);
-                            int itemTopicId = newsItem.getInt("topic_id");
-                            Log.d(TAG, "News item " + i + " topic_id: " + itemTopicId);
+            StringRequest request = new StringRequest(Request.Method.POST, url,
+                    response -> {
+                        try {
+                            // Преобразование ответа в правильную кодировку
+                            String decodedResponse = new String(response.getBytes("ISO-8859-1"), "UTF-8");
+                            Log.d(TAG, "EKB Raw response: " + decodedResponse);
                             
-                            if (itemTopicId == themeId) {
-                                Log.d(TAG, "Adding news item " + i + " to filtered list");
-                                filteredNews.put(newsItem);
+                            // Фильтруем новости по теме
+                            JSONArray allNews = new JSONArray(decodedResponse);
+                            JSONArray filteredNews = new JSONArray();
+                            int themeId = Integer.parseInt(args.getString("theme_id"));
+                            
+                            Log.d(TAG, "EKB Total news count: " + allNews.length());
+                            Log.d(TAG, "EKB Filtering for theme ID: " + themeId);
+                            
+                            for (int i = 0; i < allNews.length(); i++) {
+                                JSONObject newsItem = allNews.getJSONObject(i);
+                                int itemTopicId = newsItem.getInt("topic_id");
+                                Log.d(TAG, "EKB News item " + i + " topic_id: " + itemTopicId);
+                                
+                                if (itemTopicId == themeId) {
+                                    Log.d(TAG, "EKB Adding news item " + i + " to filtered list");
+                                    filteredNews.put(newsItem);
+                                }
                             }
+                            
+                            Log.d(TAG, "EKB Filtered news count: " + filteredNews.length());
+                            
+                            if (filteredNews.length() == 0) {
+                                Toast.makeText(getContext(), "Новости по выбранной теме не найдены", Toast.LENGTH_LONG).show();
+                                requireActivity().getSupportFragmentManager().popBackStack();
+                                return;
+                            }
+                            
+                            // Обновляем список новостей
+                            parseResponse(filteredNews.toString());
+                            
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error processing EKB updated news response: " + e.getMessage(), e);
+                            Toast.makeText(getContext(), "Ошибка обработки ответа: " + e.getMessage(), Toast.LENGTH_LONG).show();
                         }
-                        
-                        Log.d(TAG, "Filtered news count: " + filteredNews.length());
-                        
-                        if (filteredNews.length() == 0) {
-                            Toast.makeText(getContext(), "Новости по выбранной теме не найдены", Toast.LENGTH_LONG).show();
-                            requireActivity().getSupportFragmentManager().popBackStack();
-                            return;
-                        }
-                        
-                        // Обновляем список новостей
-                        parseResponse(filteredNews.toString());
-                        
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error processing updated news response: " + e.getMessage(), e);
-                        Toast.makeText(getContext(), "Ошибка обработки ответа: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                },
-                error -> {
-                    Log.e(TAG, "Error making update request: " + error.getMessage(), error);
-                    String errorMessage;
-                    if (error.networkResponse != null) {
-                        if (error.networkResponse.statusCode == 404) {
-                            errorMessage = "Новости за выбранный период не найдены";
+                    },
+                    error -> {
+                        Log.e(TAG, "Error making EKB update request: " + error.getMessage(), error);
+                        String errorMessage;
+                        if (error.networkResponse != null) {
+                            if (error.networkResponse.statusCode == 404) {
+                                errorMessage = "Новости за выбранный период не найдены";
+                            } else {
+                                errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
+                            }
                         } else {
-                            errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
+                            errorMessage = "Ошибка сети. Проверьте подключение к интернету";
                         }
-                    } else {
-                        errorMessage = "Ошибка сети. Проверьте подключение к интернету";
+                        Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
                     }
-                    Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+            ) {
+                @Override
+                public String getBodyContentType() {
+                    return "application/json; charset=utf-8";
                 }
-        ) {
-            @Override
-            public String getBodyContentType() {
-                return "application/json; charset=utf-8";
-            }
 
-            @Override
-            public byte[] getBody() {
-                try {
-                    return requestBody.toString().getBytes("utf-8");
-                } catch (Exception e) {
-                    Log.e(TAG, "Error creating request body: " + e.getMessage(), e);
-                    return null;
+                @Override
+                public byte[] getBody() {
+                    try {
+                        return requestBody.toString().getBytes("utf-8");
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error creating EKB request body: " + e.getMessage(), e);
+                        return null;
+                    }
                 }
+            };
+
+            request.setRetryPolicy(new com.android.volley.DefaultRetryPolicy(
+                    30000,
+                    3,
+                    com.android.volley.DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+            ));
+
+            requestQueue.add(request);
+        } else {
+            // Для регионов используем новый эндпоинт
+            String regionId = args.getString("region_id");
+            if (regionId == null) {
+                Log.e(TAG, "Region ID is null for region code: " + regionCode);
+                Toast.makeText(getContext(), "Ошибка: ID региона не найден", Toast.LENGTH_LONG).show();
+                return;
             }
-        };
+            
+            url = String.format("http://192.168.0.103:8000/api/v1/regions/%s/news/", regionId);
+            Log.d(TAG, "Region update URL: " + url);
+            
+            try {
+                JSONObject requestBody = new JSONObject();
+                requestBody.put("topic_id", Integer.parseInt(args.getString("theme_id")));
+                requestBody.put("limit", 50);
+                Log.d(TAG, "Region request body: " + requestBody.toString());
+                
+                JsonArrayRequest request = new JsonArrayRequest(
+                        Request.Method.POST,
+                        url,
+                        null, // тело запроса будет установлено в getBody()
+                        response -> {
+                            try {
+                                String decodedResponse = response.toString();
+                                Log.d(TAG, "Region Raw response: " + decodedResponse);
+                                
+                                // Обновляем список новостей напрямую
+                                parseResponse(decodedResponse);
+                                
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error processing region updated news response: " + e.getMessage(), e);
+                                Toast.makeText(getContext(), "Ошибка обработки ответа: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                            }
+                        },
+                        error -> {
+                            Log.e(TAG, "Error making region update request: " + error.getMessage(), error);
+                            String errorMessage;
+                            if (error.networkResponse != null) {
+                                if (error.networkResponse.statusCode == 404) {
+                                    errorMessage = "Новости по выбранной теме не найдены";
+                                } else {
+                                    errorMessage = "Ошибка сервера: " + error.networkResponse.statusCode;
+                                }
+                            } else {
+                                errorMessage = "Ошибка сети. Проверьте подключение к интернету";
+                            }
+                            Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+                        }
+                ) {
+                    @Override
+                    public Map<String, String> getHeaders() {
+                        Map<String, String> headers = new HashMap<>();
+                        headers.put("accept", "application/json; charset=utf-8");
+                        Log.d(TAG, "Region request headers: " + headers);
+                        return headers;
+                    }
 
-        request.setRetryPolicy(new com.android.volley.DefaultRetryPolicy(
-                30000,
-                3,
-                com.android.volley.DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-        ));
+                    @Override
+                    public byte[] getBody() {
+                        try {
+                            return requestBody.toString().getBytes("utf-8");
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error creating region request body: " + e.getMessage(), e);
+                            return null;
+                        }
+                    }
 
-        requestQueue.add(request);
+                    @Override
+                    public String getBodyContentType() {
+                        return "application/json; charset=utf-8";
+                    }
+                };
+
+                request.setRetryPolicy(new com.android.volley.DefaultRetryPolicy(
+                        30000,
+                        3,
+                        com.android.volley.DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+                ));
+
+                Log.d(TAG, "Sending region update request...");
+                requestQueue.add(request);
+            } catch (Exception e) {
+                Log.e(TAG, "Error creating region request: " + e.getMessage(), e);
+                Toast.makeText(getContext(), "Ошибка создания запроса: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     private void navigateToResultFragment(NewsItem newsItem) {
+        Log.d(TAG, "Navigating to result fragment for: " + newsItem.getTitle());
+        Log.d(TAG, "Summarized text check - null: " + (newsItem.getSummarizedText() == null) + 
+                  ", empty: " + (newsItem.getSummarizedText() != null && newsItem.getSummarizedText().isEmpty()) + 
+                  ", equals 'Сгенерированный текст': " + (newsItem.getSummarizedText() != null && newsItem.getSummarizedText().equals("Сгенерированный текст")) +
+                  ", equals 'null': " + (newsItem.getSummarizedText() != null && newsItem.getSummarizedText().equals("null")) +
+                  ", actual value: '" + newsItem.getSummarizedText() + "'");
+        
         // Проверяем, есть ли уже суммаризированный текст
         if (newsItem.getSummarizedText() != null && 
             !newsItem.getSummarizedText().isEmpty() && 
-            !newsItem.getSummarizedText().equals("Сгенерированный текст")) {
+            !newsItem.getSummarizedText().equals("Сгенерированный текст") &&
+            !newsItem.getSummarizedText().equals("null")) {
             // Если текст уже есть, сразу переходим к результату
+            Log.d(TAG, "Using existing summarized text for: " + newsItem.getTitle());
             openResultFragment(newsItem, newsItem.getSummarizedText());
         } else {
             // Для Екатеринбурга — суммаризация по ссылке
             Bundle args = getArguments();
             String regionCode = args != null ? args.getString("region_code", "ekb") : "ekb";
+            Log.d(TAG, "Region code: " + regionCode + ", will request summarization for: " + newsItem.getTitle());
+            
             if (regionCode.equals("ekb")) {
                 showProgressDialog();
                 String url = "http://192.168.0.103:8000/summarize/by-link-ekb";
@@ -452,7 +572,10 @@ public class    NewsListFragment extends Fragment {
                     response -> {
                         hideProgressDialog();
                         String summarizedText = response.optString("summarized_text", "");
-                        if (!summarizedText.isEmpty()) {
+                        Log.d(TAG, "EKB summarization response for: " + newsItem.getTitle() + 
+                                  ", summarized_text length: " + summarizedText.length() + 
+                                  ", summarized_text: '" + summarizedText + "'");
+                        if (!summarizedText.isEmpty() && !summarizedText.equals("null")) {
                             openResultFragment(newsItem, summarizedText);
                         } else {
                             Toast.makeText(getContext(), "Не удалось получить суммаризацию", Toast.LENGTH_SHORT).show();
@@ -487,7 +610,10 @@ public class    NewsListFragment extends Fragment {
                     response -> {
                         hideProgressDialog();
                         String summarizedText = response.optString("summarized_text", "");
-                        if (!summarizedText.isEmpty()) {
+                        Log.d(TAG, "Region summarization response for: " + newsItem.getTitle() + 
+                                  ", summarized_text length: " + summarizedText.length() + 
+                                  ", summarized_text: '" + summarizedText + "'");
+                        if (!summarizedText.isEmpty() && !summarizedText.equals("null")) {
                             openResultFragment(newsItem, summarizedText);
                         } else {
                             Toast.makeText(getContext(), "Не удалось получить суммаризацию", Toast.LENGTH_SHORT).show();
@@ -510,6 +636,9 @@ public class    NewsListFragment extends Fragment {
     }
 
     private void openResultFragment(NewsItem newsItem, String summarizedText) {
+        Log.d(TAG, "Opening ResultFragment with summarized_text length: " + summarizedText.length() + 
+                  ", summarized_text: '" + summarizedText + "'");
+        
         ResultFragment resultFragment = new ResultFragment();
         Bundle resultArgs = new Bundle();
         resultArgs.putString("post_theme", newsItem.getTitle());

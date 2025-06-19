@@ -1545,6 +1545,9 @@ public class GenerateFragment extends Fragment {
                                 args.putString("details", details);
                                 args.putStringArray("social_networks", socialNetworks);
                                 args.putString("region_code", selectedRegionCode);
+                                // Добавляем даты для Екатеринбурга
+                                args.putString("start_date", startDateEditText.getText().toString());
+                                args.putString("end_date", endDateEditText.getText().toString());
 
                                 NewsListFragment newsListFragment = new NewsListFragment();
                                 newsListFragment.setArguments(args);

@@ -81,6 +81,18 @@ public class ResultFragment extends Fragment {
             String[] socialNetworks = getArguments().getStringArray("social_networks");
             boolean fromHistory = getArguments().getBoolean("from_history", false);
 
+            // Логируем полученные данные
+            Log.d(TAG, "ResultFragment received data:");
+            Log.d(TAG, "  - post_theme: " + postTheme);
+            Log.d(TAG, "  - publication_date: " + publicationDate);
+            Log.d(TAG, "  - source: " + source);
+            Log.d(TAG, "  - summarized_text length: " + (summarizedText != null ? summarizedText.length() : "null"));
+            Log.d(TAG, "  - summarized_text: '" + summarizedText + "'");
+            Log.d(TAG, "  - link: " + link);
+            Log.d(TAG, "  - tone: " + tone);
+            Log.d(TAG, "  - length: " + length);
+            Log.d(TAG, "  - from_history: " + fromHistory);
+
             // Сохраняем оригинальный текст
             originalSummarizedText = summarizedText;
 
