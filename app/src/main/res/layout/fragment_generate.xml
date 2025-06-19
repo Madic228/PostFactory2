@@ -454,16 +454,34 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Социальные сети"
+                    android:text="Социальная сеть"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="@color/black"
                     android:layout_marginBottom="8dp"/>
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvSocialNetworks"
+                <RadioGroup
+                    android:id="@+id/rgSocialNetworks"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <RadioButton
+                        android:id="@+id/rbVK"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="VK"
+                        android:textColor="@color/black"/>
+
+                    <RadioButton
+                        android:id="@+id/rbTelegram"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Telegram"
+                        android:textColor="@color/black"/>
+                </RadioGroup>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

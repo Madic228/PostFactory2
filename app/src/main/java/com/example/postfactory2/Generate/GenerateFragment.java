@@ -17,6 +17,7 @@ import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.Toast;
 import android.widget.TextView;
+import android.widget.RadioButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -67,9 +68,8 @@ public class GenerateFragment extends Fragment {
 
     private AutoCompleteTextView spinnerTheme, spinnerTone, regionSpinner;
     private EditText startDateEditText, endDateEditText;
-    private RadioGroup periodRadioGroup, rgPostLength;
+    private RadioGroup periodRadioGroup, rgPostLength, rgSocialNetworks;
     private LinearLayout customDateLayout;
-    private RecyclerView rvSocialNetworks;
     private RequestQueue requestQueue;
     private ProgressDialog progressDialog;
     private Calendar startDate, endDate;
@@ -92,7 +92,7 @@ public class GenerateFragment extends Fragment {
         periodRadioGroup = view.findViewById(R.id.periodRadioGroup);
         rgPostLength = view.findViewById(R.id.rgPostLength);
         customDateLayout = view.findViewById(R.id.customDateLayout);
-        rvSocialNetworks = view.findViewById(R.id.rvSocialNetworks);
+        rgSocialNetworks = view.findViewById(R.id.rgSocialNetworks);
 
         // Инициализация RequestQueue
         requestQueue = Volley.newRequestQueue(requireContext());
@@ -111,7 +111,6 @@ public class GenerateFragment extends Fragment {
         // Настройка элементов
         setupSpinners();
         setupRegionSpinner();
-        setupRecyclerView();
         setupDatePicker();
         setupPeriodRadioGroup();
 
@@ -270,17 +269,6 @@ public class GenerateFragment extends Fragment {
 
         Log.d(TAG, "Sending regions list request...");
         requestQueue.add(request);
-    }
-
-    private void setupRecyclerView() {
-        rvSocialNetworks.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        List<String> socialNetworks = new ArrayList<>();
-        socialNetworks.add("VK");
-        socialNetworks.add("Telegram");
-
-        SocialNetworkAdapter adapter = new SocialNetworkAdapter(socialNetworks);
-        rvSocialNetworks.setAdapter(adapter);
     }
 
     private void setupDatePicker() {
@@ -1761,8 +1749,12 @@ public class GenerateFragment extends Fragment {
     }
 
     private String[] getSelectedSocialNetworks() {
-        SocialNetworkAdapter adapter = (SocialNetworkAdapter) rvSocialNetworks.getAdapter();
-        return adapter.getSelectedNetworks();
+        int selectedId = rgSocialNetworks.getCheckedRadioButtonId();
+        if (selectedId != -1) {
+            RadioButton selectedRadioButton = getView().findViewById(selectedId);
+            return new String[]{selectedRadioButton.getText().toString()};
+        }
+        return new String[0];
     }
 
     private boolean validateInputs() {
@@ -1791,6 +1783,11 @@ public class GenerateFragment extends Fragment {
 
         if (regionSpinner.getText().toString().isEmpty()) {
             Toast.makeText(getContext(), "Выберите регион", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (rgSocialNetworks.getCheckedRadioButtonId() == -1) {
+            Toast.makeText(getContext(), "Выберите социальную сеть", Toast.LENGTH_SHORT).show();
             return false;
         }
 
